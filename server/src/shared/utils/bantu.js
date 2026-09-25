@@ -27,6 +27,30 @@ export function bakukanNomorWa(mentah) {
   return n;
 }
 
+/**
+ * Menyusun kemungkinan bentuk penulisan nomor untuk keperluan PENCARIAN.
+ *
+ * Nomor disimpan dalam bentuk baku 62xxxxxxxxxx, sementara orang terbiasa
+ * mengetik 08xxxxxxxxxx. Yang diketik juga sering baru sepotong, misalnya
+ * "0878" saja, sehingga tidak bisa lewat pembakuan biasa yang mensyaratkan
+ * nomor lengkap.
+ *
+ *   polaNomor('0878')  -> ['0878', '62878']
+ *   polaNomor('878')   -> ['878', '62878']
+ *   polaNomor('62878') -> ['62878', '0878']
+ */
+export function polaNomor(teks) {
+  const angka = String(teks || '').replace(/[^0-9]/g, '');
+  if (!angka) return [];
+
+  const pola = new Set([angka]);
+  if (angka.startsWith('0')) pola.add('62' + angka.slice(1));
+  else if (angka.startsWith('8')) pola.add('62' + angka);
+  else if (angka.startsWith('62')) pola.add('0' + angka.slice(2));
+
+  return [...pola];
+}
+
 /** 15000 -> "Rp 15.000" */
 export const rupiah = (angka) =>
   'Rp ' + Number(angka || 0).toLocaleString('id-ID', { maximumFractionDigits: 0 });

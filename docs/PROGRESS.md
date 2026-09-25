@@ -137,3 +137,10 @@ Kosongkan dengan `npm run seed:bersihkan` sebelum dipakai berjualan sungguhan.
 | Tanggal | Isi |
 |---|---|
 | 25 September 2026 | Seluruh Gelombang 1–3 dikerjakan. Basis data, backend, frontend, data contoh, dan uji alur kasir selesai |
+| 25 September 2026 | Semua isian uang tampil dalam rupiah (`Rp 35.000`) sementara yang tersimpan tetap angka polos |
+| 25 September 2026 | Media bukti bayar bisa disaring dan dicari berdasarkan siapa yang mengunggah |
+| 25 September 2026 | Dua akun asli dibuat: Lutfi Apriamto (pemilik) dan Ari (manajer) |
+| 25 September 2026 | Antrian Kirim Struk bisa dicari berdasarkan nama pembeli, nomor telepon, atau nomor transaksi. Nomor cocok dalam bentuk `08...` maupun `62...`, termasuk kalau baru diketik sepotong |
+| 25 September 2026 | Antrian Kirim Struk, Transaksi, dan Kontak WhatsApp semuanya urut dari yang paling baru |
+| 25 September 2026 | Daftar Transaksi dan Stok kini langsung menyegarkan diri setelah ada transaksi baru atau pembatalan |
+| 25 September 2026 | Jam transaksi contoh untuk hari ini tidak lagi melampaui jam sekarang, supaya transaksi sungguhan tidak tenggelam di bawahnya |

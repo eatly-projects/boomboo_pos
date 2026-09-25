@@ -1,0 +1,6 @@
+# Berkas-berkas ini hanya dipakai di komputer sendiri, tidak perlu ikut
+# terpasang di server. Mengeluarkannya membuat pemasangan lebih cepat dan
+# memastikan tidak ada skrip pengisi data contoh yang terbawa ke server.
+seed/
+migrations/
+uji/

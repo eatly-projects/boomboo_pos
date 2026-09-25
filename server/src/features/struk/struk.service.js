@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { kueri } from '../../shared/db/pool.js';
 import { tidakDitemukan } from '../../shared/middleware/error.js';
-import { rupiah, halaman } from '../../shared/utils/bantu.js';
+import { rupiah, halaman, polaNomor } from '../../shared/utils/bantu.js';
 
 const alamatAplikasi = () => (process.env.APP_URL || 'http://localhost:5180').replace(/\/$/, '');
 
@@ -20,7 +20,7 @@ export function susunPesanWa(trx) {
     'Terima kasih sudah belanja di Boomboo.',
     '',
     `Total belanja: ${rupiah(trx.total)}`,
-    `Struk: ${linkStruk(trx.kode_struk)}`,
+    `Lihat struk Anda: ${linkStruk(trx.kode_struk)}`,
     '',
     'Gurih, nagih. Sampai ketemu lagi!',
   ].join('\n');
@@ -63,21 +63,49 @@ export async function publik(kode) {
 export async function antrian(query = {}) {
   const { perHalaman, halamanKe, lewati } = halaman({ per_halaman: 50, ...query });
 
+  const syarat = [
+    `status = 'selesai'`,
+    `status_struk = 'menunggu_kirim'`,
+    `nomor_wa is not null`,
+  ];
+  const nilai = [];
+
+  // Pencarian menerima nama pembeli, nomor telepon, maupun nomor transaksi.
+  // Nomor telepon dicocokkan dalam beberapa bentuk penulisan sekaligus,
+  // supaya mengetik "0878" maupun "62878" sama-sama ketemu, walaupun baru
+  // sepotong dan belum berupa nomor lengkap.
+  if (query.cari) {
+    const kata = String(query.cari).trim();
+    nilai.push(`%${kata}%`);
+    const posKata = nilai.length;
+
+    const cocokNomor = polaNomor(kata).map((p) => {
+      nilai.push(`%${p}%`);
+      return `nomor_wa ilike $${nilai.length}`;
+    });
+
+    syarat.push(
+      `(nama_pembeli ilike $${posKata}
+        or nomor ilike $${posKata}
+        ${cocokNomor.length ? 'or ' + cocokNomor.join(' or ') : ''})`
+    );
+  }
+
+  const where = `where ${syarat.join(' and ')}`;
+
   const { rows } = await kueri(
     `select id, nomor, kode_struk, total, nama_pembeli, nomor_wa,
             nama_kasir, dikonfirmasi_pada
        from transaksi
-      where status = 'selesai'
-        and status_struk = 'menunggu_kirim'
-        and nomor_wa is not null
-      order by dikonfirmasi_pada asc
-      limit $1 offset $2`,
-    [perHalaman, lewati]
+       ${where}
+      order by dikonfirmasi_pada desc
+      limit $${nilai.length + 1} offset $${nilai.length + 2}`,
+    [...nilai, perHalaman, lewati]
   );
 
   const { rows: hitung } = await kueri(
-    `select count(*)::int as total from transaksi
-      where status = 'selesai' and status_struk = 'menunggu_kirim' and nomor_wa is not null`
+    `select count(*)::int as total from transaksi ${where}`,
+    nilai
   );
 
   return {
@@ -111,8 +139,20 @@ export async function kontak(query = {}) {
   const nilai = [];
 
   if (query.cari) {
-    nilai.push(`%${query.cari}%`);
-    syarat.push(`(nomor ilike $${nilai.length} or nama ilike $${nilai.length})`);
+    const kata = String(query.cari).trim();
+    nilai.push(`%${kata}%`);
+    const posKata = nilai.length;
+
+    // Nomor disimpan dalam bentuk 62..., sementara orang terbiasa mengetik
+    // 08... Semua bentuk penulisannya dicocokkan sekaligus.
+    const cocokNomor = polaNomor(kata).map((p) => {
+      nilai.push(`%${p}%`);
+      return `nomor ilike $${nilai.length}`;
+    });
+
+    syarat.push(
+      `(nama ilike $${posKata}${cocokNomor.length ? ' or ' + cocokNomor.join(' or ') : ''})`
+    );
   }
   const where = syarat.length ? `where ${syarat.join(' and ')}` : '';
 

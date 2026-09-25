@@ -229,8 +229,14 @@ async function geserKeTanggal(idTransaksi, tanggal, urutanMulai) {
 
   let urut = urutanMulai;
   for (const id of idTransaksi) {
-    // jam buka lapak: 10.00 - 21.00 WIB (UTC+7)
-    const jam = acakInt(10, 20);
+    // Jam buka lapak: 10.00 - 21.00 WIB (UTC+7).
+    // Khusus HARI INI jamnya dibatasi sampai jam sekarang, supaya transaksi
+    // contoh tidak pernah tampak dibuat di masa depan dan menenggelamkan
+    // transaksi sungguhan yang baru saja dibuat.
+    const sekarangWib = new Date(Date.now() + 7 * 60 * 60 * 1000);
+    const hariIni = tanggal.mundur === 0;
+    const jamMaks = hariIni ? Math.max(sekarangWib.getUTCHours() - 1, 10) : 20;
+    const jam = acakInt(10, Math.max(jamMaks, 10));
     const menit = acakInt(0, 59);
     const detik = acakInt(0, 59);
     const waktu = new Date(Date.UTC(tanggal.y, tanggal.m - 1, tanggal.d, jam - 7, menit, detik));

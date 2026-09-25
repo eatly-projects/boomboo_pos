@@ -1,22 +1,35 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { LuSend, LuCheck, LuInbox, LuMessageCircle, LuRefreshCw } from 'react-icons/lu';
+import {
+  LuSend, LuCheck, LuInbox, LuMessageCircle, LuRefreshCw, LuSearch, LuX,
+} from 'react-icons/lu';
 import { ambil, api, denganToast } from '@/shared/lib/api';
 import { rupiah, tanggalJam, nomorWaTampil } from '@/shared/lib/format';
 import { Button } from '@/shared/components/ui/button';
+import { Input } from '@/shared/components/ui/input';
 import { KepalaHalaman, Kosong, Rangka, Pemberitahuan } from '@/shared/components/ui/tampilan';
 
 export default function AntrianStruk() {
   const klien = useQueryClient();
   const [sedangProses, setSedangProses] = useState(null);
+  const [cari, setCari] = useState('');
+
+  // Ketikan ditahan sebentar supaya tidak memanggil server tiap huruf.
+  const [kataCari, setKataCari] = useState('');
+  useEffect(() => {
+    const jeda = setTimeout(() => setKataCari(cari.trim()), 350);
+    return () => clearTimeout(jeda);
+  }, [cari]);
 
   const data = useQuery({
-    queryKey: ['antrian-struk'],
-    queryFn: () => ambil('/struk/antrian'),
+    queryKey: ['antrian-struk', kataCari],
+    queryFn: () => ambil('/struk/antrian', { params: kataCari ? { cari: kataCari } : {} }),
     refetchInterval: 20000,
+    placeholderData: (sebelumnya) => sebelumnya,
   });
 
   const daftar = data.data?.daftar || [];
+  const totalAntrian = data.data?.halaman?.total ?? 0;
 
   async function tandaiTerkirim(id) {
     setSedangProses(id);
@@ -53,6 +66,27 @@ export default function AntrianStruk() {
         Setelah itu kembali ke sini dan tekan <strong>Sudah dikirim</strong>.
       </Pemberitahuan>
 
+      {/* Pencarian */}
+      <div className="relative mb-4">
+        <LuSearch className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-coklat-400" />
+        <Input
+          placeholder="Cari nama pembeli, nomor telepon, atau nomor transaksi..."
+          value={cari}
+          onChange={(e) => setCari(e.target.value)}
+          className="pl-10 pr-10"
+        />
+        {cari && (
+          <button
+            type="button"
+            aria-label="Hapus pencarian"
+            onClick={() => setCari('')}
+            className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg p-2 text-coklat-400 hover:bg-coklat-50"
+          >
+            <LuX className="size-4" />
+          </button>
+        )}
+      </div>
+
       {data.isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (
@@ -61,15 +95,35 @@ export default function AntrianStruk() {
         </div>
       ) : daftar.length === 0 ? (
         <Kosong
-          ikon={LuInbox}
-          judul="Antrian kosong"
-          keterangan="Semua struk sudah dikirim. Kerja bagus!"
+          ikon={kataCari ? LuSearch : LuInbox}
+          judul={kataCari ? 'Tidak ada yang cocok' : 'Antrian kosong'}
+          keterangan={
+            kataCari
+              ? `Tidak ditemukan struk dengan kata "${kataCari}". Coba nama lain, atau ketik nomor teleponnya.`
+              : 'Semua struk sudah dikirim. Kerja bagus!'
+          }
+          aksi={
+            kataCari && (
+              <Button variant="garis" onClick={() => setCari('')}>
+                Tampilkan semua antrian
+              </Button>
+            )
+          }
         />
       ) : (
         <>
           <p className="mb-3 text-sm text-coklat-400">
-            <span className="angka font-bold text-coklat-900">{daftar.length}</span> struk menunggu
-            dikirim
+            {kataCari ? (
+              <>
+                Ketemu <span className="angka font-bold text-coklat-900">{totalAntrian}</span> struk
+                untuk kata &ldquo;{kataCari}&rdquo;
+              </>
+            ) : (
+              <>
+                <span className="angka font-bold text-coklat-900">{totalAntrian}</span> struk
+                menunggu dikirim, mulai dari yang paling baru
+              </>
+            )}
           </p>
 
           <div className="space-y-2">

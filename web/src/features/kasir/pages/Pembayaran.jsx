@@ -312,8 +312,11 @@ export default function Pembayaran() {
         }),
         { memuat: 'Mengonfirmasi pembayaran...', sukses: (d) => d.pesan }
       );
-      klien.invalidateQueries({ queryKey: ['produk'] });
-      klien.invalidateQueries({ queryKey: ['dashboard'] });
+      // Semua daftar yang ikut berubah disegarkan, supaya transaksi yang
+      // baru saja dibuat langsung muncul di halaman Transaksi dan Stok.
+      ['produk', 'dashboard', 'transaksi', 'stok', 'antrian-struk'].forEach((k) =>
+        klien.invalidateQueries({ queryKey: [k] })
+      );
       setSudahDibayar(hasil.data);
     } catch {
       setSedangKirim(false);
@@ -326,6 +329,9 @@ export default function Pembayaran() {
       await denganToast(
         () => api.post(`/transaksi/${id}/batal`, { alasan: 'Dibatalkan dari layar pembayaran' }),
         { memuat: 'Membatalkan...', sukses: 'Transaksi dibatalkan.' }
+      );
+      ['produk', 'dashboard', 'transaksi', 'stok'].forEach((k) =>
+        klien.invalidateQueries({ queryKey: [k] })
       );
       navigate('/kasir');
     } catch {
@@ -365,7 +371,9 @@ export default function Pembayaran() {
         <FormPembeli
           transaksi={sudahDibayar}
           onSelesai={() => {
-            klien.invalidateQueries({ queryKey: ['antrian-struk'] });
+            ['antrian-struk', 'transaksi', 'kontak'].forEach((k) =>
+              klien.invalidateQueries({ queryKey: [k] })
+            );
             navigate('/kasir');
           }}
         />
