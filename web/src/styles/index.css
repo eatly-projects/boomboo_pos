@@ -1,0 +1,157 @@
+@import 'tailwindcss';
+
+/* =====================================================================
+   Warna merek Boomboo
+   Sumber: BO_BrandBook_2024.pdf halaman 17-21
+
+   Dua aturan dari brand book yang dipegang di seluruh aplikasi:
+   1. Jangan pakai hitam untuk teks, jangan sekali-kali hitam untuk latar.
+      Gantinya cokelat tua (#3d1f12).
+   2. Maksimal 3 warna dalam satu tampilan.
+
+   Aplikasi dalam (kasir, stok, dashboard) sengaja dibuat berlatar putih
+   dengan Boom Red hanya sebagai aksen, supaya angka gampang dibaca sambil
+   buru-buru. Halaman struk yang dilihat pembeli baru tampil penuh warna.
+   ===================================================================== */
+
+@theme {
+  /* Warna tanda tangan */
+  --color-boom-50: #fef2f1;
+  --color-boom-100: #fde3e0;
+  --color-boom-200: #fbcbc6;
+  --color-boom-300: #f7a89f;
+  --color-boom-400: #f07567;
+  --color-boom-500: #e43222; /* Boom Red - untuk layar */
+  --color-boom-600: #c83c32; /* Boom Red - versi cetak */
+  --color-boom-700: #a82b23;
+  --color-boom-800: #8b2620;
+  --color-boom-900: #742521;
+
+  /* Warna utama lainnya */
+  --color-daun-50: #f4f7f0;
+  --color-daun-100: #e5edde;
+  --color-daun-300: #a8c08e;
+  --color-daun-500: #537236; /* Leaf Green */
+  --color-daun-700: #3d5527;
+
+  --color-biji-50: #fdfaf1;
+  --color-biji-100: #fbf3dd;
+  --color-biji-300: #f7e6bc;
+  --color-biji-500: #f3db9f; /* Seed Yellow */
+  --color-biji-700: #d9bb6f;
+
+  /* Warna pendukung */
+  --color-biru-500: #2e4193;
+  --color-terakota-500: #cd5731;
+
+  /* Cokelat - dipakai sebagai warna teks pengganti hitam */
+  --color-coklat-50: #faf7f5;
+  --color-coklat-100: #f0e9e5;
+  --color-coklat-200: #ddcec6;
+  --color-coklat-400: #8a6d5d;
+  --color-coklat-600: #5c3a28;
+  --color-coklat-900: #3d1f12;
+
+  /* Netral */
+  --color-netral-100: #f5f5f4;
+  --color-netral-200: #e8e8e7;
+  --color-netral-300: #d1d1d0;
+  --color-netral-500: #8a8a88;
+
+  /* Huruf
+     Huruf merek asli (Sao Torpes & Nimbus Sans Condensed) belum ada
+     berkasnya. Sementara dipakai pengganti gratis yang bentuknya paling
+     mendekati. Begitu berkas aslinya ada, cukup ganti di sini. */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-judul: 'Archivo Black', 'Inter', sans-serif;
+  --font-sempit: 'Barlow Condensed', 'Inter', sans-serif;
+
+  --radius-xl: 0.875rem;
+  --radius-2xl: 1.125rem;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-netral-200);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: #ffffff;
+    color: var(--color-coklat-900);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    /* aman untuk HP berponi */
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Angka selalu selebar sama, supaya kolom harga tidak goyang */
+  .angka {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Tombol dan kolom isian tidak boleh mengecil di HP, kalau di bawah 16px
+     Safari otomatis memperbesar layar saat kolom disentuh. */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+  @media (min-width: 640px) {
+    input,
+    select,
+    textarea {
+      font-size: 0.875rem;
+    }
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-netral-300);
+    border-radius: 9999px;
+    border: 3px solid #fff;
+  }
+}
+
+@layer utilities {
+  .judul {
+    font-family: var(--font-judul);
+    letter-spacing: -0.01em;
+  }
+  .sempit {
+    font-family: var(--font-sempit);
+  }
+
+  /* Pita belah ketupat - elemen dekoratif dari brand book halaman 29.
+     Warnanya mengikuti warna teks wadahnya, supaya pita yang sama bisa
+     dipakai di atas latar putih maupun di atas latar merah. */
+  .pita-ketupat {
+    background-image:
+      linear-gradient(135deg, currentColor 25%, transparent 25%),
+      linear-gradient(225deg, currentColor 25%, transparent 25%),
+      linear-gradient(315deg, currentColor 25%, transparent 25%),
+      linear-gradient(45deg, currentColor 25%, transparent 25%);
+    background-size: 16px 16px;
+    background-position: 0 0, 8px 0, 8px -8px, 0 8px;
+  }
+
+  .animasi-naik {
+    animation: naik 0.25s ease-out;
+  }
+  @keyframes naik {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}

@@ -1,0 +1,41 @@
+# Rahasia — JANGAN PERNAH di-commit
+.env
+.env.*
+!.env.example
+supabase untuk pos.txt
+*.key
+*.pem
+
+# Dependensi
+node_modules/
+.pnp
+.pnp.js
+
+# Hasil build
+dist/
+build/
+.vercel/
+.output/
+
+# Log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Editor & sistem
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Berkas sementara
+*.tmp
+.cache/
+coverage/
+
+# Dokumen vendor - ukurannya besar dan aplikasi tidak membutuhkannya.
+# Logo dan ikonnya sudah diekstrak ke brand-assets/ dan web/public/merek/
+BO_BrandBook_2024.pdf
+*.pdf
