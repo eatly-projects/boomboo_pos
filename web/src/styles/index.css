@@ -155,3 +155,50 @@
     }
   }
 }
+
+/* =====================================================================
+   Cadangan untuk peramban lama
+   =====================================================================
+   Satuan dvh ("tinggi layar yang menyesuaikan bilah alamat") baru dikenal
+   Safari 15.4 ke atas, Chrome 108 ke atas. Di HP yang lebih tua satuan ini
+   diabaikan begitu saja, akibatnya layar kasir kehilangan tingginya dan
+   tata letaknya ambruk.
+
+   Ditulis memakai @supports, BUKAN pola dua baris "vh lalu dvh", karena
+   alat pemadat berkas menganggap baris pertama mubazir lalu menghapusnya.
+   Blok @supports aman: hanya dibaca peramban yang memang belum mengenal
+   dvh, dan dilewati begitu saja oleh peramban baru.
+
+   Ditulis di luar @layer supaya menang dari kelas bawaan Tailwind.
+   ===================================================================== */
+@supports not (height: 100dvh) {
+  .min-h-dvh {
+    min-height: 100vh;
+  }
+
+  .h-dvh {
+    height: 100vh;
+  }
+
+  .max-h-\[85dvh\] {
+    max-height: 85vh;
+  }
+
+  .max-h-\[90dvh\] {
+    max-height: 90vh;
+  }
+
+  .max-h-\[92dvh\] {
+    max-height: 92vh;
+  }
+
+  .h-\[calc\(100dvh-3rem\)\] {
+    height: calc(100vh - 3rem);
+  }
+
+  @media (min-width: 64rem) {
+    .lg\:h-\[calc\(100dvh-3rem\)\] {
+      height: calc(100vh - 3rem);
+    }
+  }
+}

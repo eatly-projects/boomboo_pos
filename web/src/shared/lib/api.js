@@ -1,5 +1,6 @@
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { simpanan } from './simpanan';
 
 const ALAMAT = import.meta.env.VITE_API_URL || 'http://localhost:4100';
 
@@ -11,7 +12,7 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((konfig) => {
-  const token = localStorage.getItem(KUNCI_TOKEN);
+  const token = simpanan.ambil(KUNCI_TOKEN);
   if (token) konfig.headers.Authorization = `Bearer ${token}`;
   return konfig;
 });
@@ -23,7 +24,7 @@ api.interceptors.response.use(
 
     // Sesi habis: bersihkan dan kembalikan ke halaman masuk
     if (status === 401 && !galat.config?.url?.includes('/auth/masuk')) {
-      localStorage.removeItem(KUNCI_TOKEN);
+      simpanan.hapus(KUNCI_TOKEN);
       if (!location.pathname.startsWith('/masuk') && !location.pathname.startsWith('/struk/')) {
         location.href = '/masuk';
       }

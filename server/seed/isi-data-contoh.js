@@ -227,19 +227,38 @@ async function buatTransaksiHarian({ produk, menu, kasirTersedia, jumlah }) {
 async function geserKeTanggal(idTransaksi, tanggal, urutanMulai) {
   if (!idTransaksi.length) return;
 
+  // Jam buka lapak: 10.00 - 21.00 WIB (UTC+7).
+  // Khusus HARI INI jamnya dibatasi sampai jam sekarang, supaya transaksi
+  // contoh tidak pernah tampak dibuat di masa depan dan menenggelamkan
+  // transaksi sungguhan yang baru saja dibuat.
+  const sekarangWib = new Date(Date.now() + 7 * 60 * 60 * 1000);
+  const hariIni = tanggal.mundur === 0;
+  const jamMaks = hariIni ? Math.max(sekarangWib.getUTCHours() - 1, 10) : 20;
+
+  // Seluruh jam dibuat dulu lalu DIURUTKAN, baru dipasangkan satu per satu.
+  // Kalau jamnya diacak sambil nomor dibagikan berurutan, nomor dan jam jadi
+  // tidak nyambung - bisa muncul nomor 0019 pada pukul 13.05 padahal nomor
+  // 0013 pada pukul 13.29. Daftar yang sebenarnya sudah urut jadi terlihat
+  // berantakan di layar.
+  const daftarWaktu = idTransaksi
+    .map(() =>
+      new Date(
+        Date.UTC(
+          tanggal.y,
+          tanggal.m - 1,
+          tanggal.d,
+          acakInt(10, Math.max(jamMaks, 10)) - 7,
+          acakInt(0, 59),
+          acakInt(0, 59)
+        )
+      )
+    )
+    .sort((a, b) => a - b);
+
   let urut = urutanMulai;
-  for (const id of idTransaksi) {
-    // Jam buka lapak: 10.00 - 21.00 WIB (UTC+7).
-    // Khusus HARI INI jamnya dibatasi sampai jam sekarang, supaya transaksi
-    // contoh tidak pernah tampak dibuat di masa depan dan menenggelamkan
-    // transaksi sungguhan yang baru saja dibuat.
-    const sekarangWib = new Date(Date.now() + 7 * 60 * 60 * 1000);
-    const hariIni = tanggal.mundur === 0;
-    const jamMaks = hariIni ? Math.max(sekarangWib.getUTCHours() - 1, 10) : 20;
-    const jam = acakInt(10, Math.max(jamMaks, 10));
-    const menit = acakInt(0, 59);
-    const detik = acakInt(0, 59);
-    const waktu = new Date(Date.UTC(tanggal.y, tanggal.m - 1, tanggal.d, jam - 7, menit, detik));
+  for (let i = 0; i < idTransaksi.length; i++) {
+    const id = idTransaksi[i];
+    const waktu = daftarWaktu[i];
     const selesai = new Date(waktu.getTime() + acakInt(40, 240) * 1000);
 
     const nomor = `BB-${tanggal.y}${String(tanggal.m).padStart(2, '0')}${String(tanggal.d).padStart(2, '0')}-${String(urut).padStart(4, '0')}`;

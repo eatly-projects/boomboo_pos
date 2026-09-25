@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { api, KUNCI_TOKEN, denganToast } from '@/shared/lib/api';
+import { simpanan } from '@/shared/lib/simpanan';
 
 /**
  * Menyimpan siapa yang sedang masuk.
@@ -10,19 +11,19 @@ import { api, KUNCI_TOKEN, denganToast } from '@/shared/lib/api';
  */
 export const useAuth = create((set, get) => ({
   user: null,
-  token: localStorage.getItem(KUNCI_TOKEN) || null,
+  token: simpanan.ambil(KUNCI_TOKEN) || null,
   sedangMemeriksa: true,
 
   /** Dipanggil sekali saat aplikasi dibuka, untuk memastikan token masih sah. */
   async periksaSesi() {
-    const token = localStorage.getItem(KUNCI_TOKEN);
+    const token = simpanan.ambil(KUNCI_TOKEN);
     if (!token) return set({ user: null, token: null, sedangMemeriksa: false });
 
     try {
       const { data } = await api.get('/auth/saya');
       set({ user: data.data, token, sedangMemeriksa: false });
     } catch {
-      localStorage.removeItem(KUNCI_TOKEN);
+      simpanan.hapus(KUNCI_TOKEN);
       set({ user: null, token: null, sedangMemeriksa: false });
     }
   },
@@ -32,7 +33,7 @@ export const useAuth = create((set, get) => ({
       memuat: 'Memeriksa akun Anda...',
       sukses: (d) => d.pesan,
     });
-    localStorage.setItem(KUNCI_TOKEN, hasil.data.token);
+    simpanan.simpan(KUNCI_TOKEN, hasil.data.token);
     set({ user: hasil.data.user, token: hasil.data.token });
     return hasil.data.user;
   },
@@ -42,13 +43,13 @@ export const useAuth = create((set, get) => ({
       memuat: 'Membuat akun...',
       sukses: (d) => d.pesan,
     });
-    localStorage.setItem(KUNCI_TOKEN, hasil.data.token);
+    simpanan.simpan(KUNCI_TOKEN, hasil.data.token);
     set({ user: hasil.data.user, token: hasil.data.token });
     return hasil.data.user;
   },
 
   keluar() {
-    localStorage.removeItem(KUNCI_TOKEN);
+    simpanan.hapus(KUNCI_TOKEN);
     set({ user: null, token: null });
   },
 
