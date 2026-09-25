@@ -120,6 +120,36 @@
 }
 
 @layer utilities {
+  /* ------------------------------------------------------------------
+     Ruang aman di dasar layar
+
+     Halaman ini memakai viewport-fit=cover supaya warnanya penuh sampai
+     tepi layar di HP berponi. Efek sampingnya, isi halaman ikut melebar
+     SAMPAI KE BAWAH bilah tombol bawaan HP (kembali, beranda, aplikasi
+     terkini) dan garis geser di iPhone.
+
+     Elemen yang menempel di dasar layar memakai position fixed, sehingga
+     TIDAK ikut padding pada body. Karena itu tombol seperti "Lanjut ke
+     Pembayaran" bisa tertutup tombol bawaan HP, terutama di HP yang masih
+     memakai tiga tombol yang tebal.
+
+     Kelas di bawah menambahkan jarak sebesar tinggi bilah itu. Di layar
+     yang tidak punya bilah, env() bernilai 0, jadi tampilannya tidak
+     berubah sama sekali. Angka di belakang nama = jarak dasarnya.
+     ------------------------------------------------------------------ */
+  .pb-aman-3 {
+    padding-bottom: calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  }
+  .pb-aman-4 {
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  }
+  .pb-aman-5 {
+    padding-bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+  }
+  .pb-aman-28 {
+    padding-bottom: calc(7rem + env(safe-area-inset-bottom, 0px));
+  }
+
   .judul {
     font-family: var(--font-judul);
     letter-spacing: -0.01em;

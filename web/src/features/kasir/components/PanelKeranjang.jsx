@@ -196,7 +196,7 @@ export default function PanelKeranjang({ onLanjut, sedangKirim, className }) {
       </div>
 
       {item.length > 0 && (
-        <div className="shrink-0 space-y-3 border-t-2 border-netral-200 p-4">
+        <div className="pb-aman-4 shrink-0 space-y-3 border-t-2 border-netral-200 px-4 pt-4">
           <KotakDiskon />
 
           <div className="space-y-1.5 text-sm">

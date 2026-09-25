@@ -51,7 +51,7 @@ function DialogFooter({ className, ...props }) {
   return (
     <div
       className={cn(
-        'sticky bottom-0 -mx-4 -mb-4 mt-5 flex flex-col-reverse gap-2 border-t-2 border-netral-200 bg-white p-4 sm:-mx-5 sm:-mb-5 sm:flex-row sm:justify-end sm:p-5',
+        'pb-aman-4 sm:pb-aman-5 sticky bottom-0 -mx-4 -mb-4 mt-5 flex flex-col-reverse gap-2 border-t-2 border-netral-200 bg-white px-4 pt-4 sm:-mx-5 sm:-mb-5 sm:flex-row sm:justify-end sm:px-5 sm:pt-5',
         className
       )}
       {...props}

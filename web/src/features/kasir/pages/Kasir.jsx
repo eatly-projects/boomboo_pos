@@ -112,7 +112,7 @@ export default function Kasir() {
           </div>
         </div>
 
-        <div className="pb-24 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pb-2">
+        <div className="pb-aman-28 lg:min-h-0 lg:flex-1 lg:overflow-y-auto lg:pb-2">
           {sedangMemuat ? (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
               {Array.from({ length: 8 }).map((_, i) => (
@@ -160,7 +160,7 @@ export default function Kasir() {
 
       {/* Keranjang - bilah bawah pada layar kecil */}
       {jumlahBarang > 0 && (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t-2 border-netral-200 bg-white p-3 lg:hidden">
+        <div className="pb-aman-3 fixed inset-x-0 bottom-0 z-30 border-t-2 border-netral-200 bg-white px-3 pt-3 lg:hidden">
           <Button
             ukuran="besar"
             className="w-full justify-between"

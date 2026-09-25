@@ -15,11 +15,21 @@ const gayaTombol = cva(
         hijau: 'bg-daun-500 text-white hover:bg-daun-700 shadow-sm',
         bahaya: 'bg-white text-boom-600 border-2 border-boom-200 hover:bg-boom-50',
       },
+      // Tinggi tombol memakai min-h ditambah padding, BUKAN tinggi mati (h-*).
+      //
+      // Kalau tingginya dipatok mati, tombol yang dipasangi flex-1 di dalam
+      // wadah flex-col akan gepeng: flex-1 berarti flex-basis nol, dan di
+      // wadah kolom basis itu berlaku ke TINGGI, sehingga menimpa tinggi
+      // matinya. Akibatnya tombol kehilangan ruang atas-bawah, terutama di
+      // layar HP yang susunannya memang menumpuk ke bawah.
+      //
+      // min-h tidak bisa ditimpa oleh flex, jadi tombol selalu punya tinggi
+      // minimal, dan padding menjaga ruangnya walau tulisannya jadi dua baris.
       ukuran: {
-        kecil: 'h-9 px-3 text-sm [&_svg]:size-4',
-        sedang: 'h-11 px-4 text-sm [&_svg]:size-4',
-        besar: 'h-14 px-6 text-base [&_svg]:size-5',
-        ikon: 'h-10 w-10 [&_svg]:size-4',
+        kecil: 'min-h-9 px-3 py-1.5 text-sm [&_svg]:size-4',
+        sedang: 'min-h-11 px-4 py-2 text-sm [&_svg]:size-4',
+        besar: 'min-h-14 px-6 py-3 text-base [&_svg]:size-5',
+        ikon: 'size-10 shrink-0 [&_svg]:size-4',
       },
     },
     defaultVariants: { variant: 'utama', ukuran: 'sedang' },

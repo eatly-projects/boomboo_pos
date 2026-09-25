@@ -74,7 +74,7 @@ export default function StokOpname() {
         <Kosong ikon={LuBoxes} judul="Belum ada produk" keterangan="Tambahkan produk dulu." />
       ) : (
         <>
-          <div className="space-y-2 pb-28">
+          <div className="pb-aman-28 space-y-2">
             {daftar.map((p) => {
               const nilai = hitungan[p.id] ?? '';
               const diisi = nilai !== '';
@@ -135,7 +135,7 @@ export default function StokOpname() {
           </div>
 
           {/* Bilah ringkasan yang selalu terlihat */}
-          <div className="fixed inset-x-0 bottom-0 z-20 border-t-2 border-netral-200 bg-white p-3 lg:left-64">
+          <div className="pb-aman-3 fixed inset-x-0 bottom-0 z-20 border-t-2 border-netral-200 bg-white px-3 pt-3 lg:left-64">
             <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-1 sm:px-3">
               <div className="text-sm">
                 <p className="angka font-bold text-coklat-900">
