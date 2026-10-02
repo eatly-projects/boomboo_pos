@@ -1,16 +1,18 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import multer from 'multer';
 import { periksa } from '../middleware/validate.js';
 import { wajibMasuk } from '../middleware/auth.js';
 import { tangkap } from '../middleware/error.js';
 
-// Berkas ditahan di memori, tidak pernah ditulis ke cakram, karena Vercel
-// menjalankan backend sebagai fungsi tanpa server yang tidak punya cakram tetap.
-const unggah = multer({ storage: multer.memoryStorage(), limits: { fileSize: 8 * 1024 * 1024 } });
+const rupiahOpsional = z.union([z.number().int().min(0), z.null()]).optional();
 
-const rupiahOpsional = z
-  .union([z.number().int().min(0), z.null()])
+const skemaKomponen = z
+  .array(
+    z.object({
+      produk_id: z.string().uuid(),
+      jumlah: z.number().int().positive('Jumlah penyusun minimal 1.'),
+    })
+  )
   .optional();
 
 const skemaTambah = z
@@ -19,6 +21,8 @@ const skemaTambah = z
     harga: z.number().int().min(0, 'Harga tidak boleh minus.'),
     harga_diskon: rupiahOpsional,
     nama_diskon: z.string().trim().min(1).nullish(),
+    dijual_satuan: z.boolean().optional(),
+    komponen: skemaKomponen,
   })
   .strict();
 
@@ -75,15 +79,6 @@ export function buatRuteKatalog(service, { label }) {
     tangkap(async (req, res) => {
       const data = await service.pulihkan(req.params.id, req.user);
       res.json({ sukses: true, pesan: `${label} dikembalikan dari arsip.`, data });
-    })
-  );
-
-  router.post(
-    '/:id/foto',
-    unggah.single('foto'),
-    tangkap(async (req, res) => {
-      const data = await service.simpanFoto(req.params.id, req.file, req.user);
-      res.json({ sukses: true, pesan: 'Foto berhasil disimpan.', data });
     })
   );
 

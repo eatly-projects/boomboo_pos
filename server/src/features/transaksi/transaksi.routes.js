@@ -22,29 +22,41 @@ const skemaBuat = z
     diskon_jenis: z.enum(['persen', 'nominal']).nullish(),
     diskon_nilai: z.number().int().min(0).nullish(),
   })
-  .refine(
-    (d) => !d.diskon_nilai || d.diskon_jenis,
-    { message: 'Pilih dulu jenis diskonnya: persentase atau potongan rupiah.' }
-  )
-  .refine(
-    (d) => d.diskon_jenis !== 'persen' || (d.diskon_nilai ?? 0) <= 100,
-    { message: 'Diskon persentase tidak boleh lebih dari 100%.' }
-  );
+  .refine((d) => !d.diskon_nilai || d.diskon_jenis, {
+    message: 'Pilih dulu jenis diskonnya: persentase atau potongan rupiah.',
+  })
+  .refine((d) => d.diskon_jenis !== 'persen' || (d.diskon_nilai ?? 0) <= 100, {
+    message: 'Diskon persentase tidak boleh lebih dari 100%.',
+  });
 
-const skemaKonfirmasi = z.object({
-  metode_bayar: z.enum(['qris', 'tunai'], {
-    errorMap: () => ({ message: 'Pilih metode pembayaran: QRIS atau Tunai.' }),
-  }),
-  uang_diterima: z.number().int().min(0).nullish(),
-});
-
-const skemaBatal = z.object({
-  alasan: z.string().trim().max(300).optional(),
-});
+const skemaBatal = z.object({ alasan: z.string().trim().max(300).optional() });
 
 const skemaPembeli = z.object({
   nama_pembeli: z.string().trim().max(120).nullish(),
   nomor_wa: z.string().trim().nullish(),
+});
+
+const skemaTukar = z.object({
+  dikembalikan: z
+    .array(
+      z.object({
+        item_id: z.string().uuid(),
+        jumlah: z.number().int().positive('Jumlah yang dikembalikan minimal 1.'),
+      })
+    )
+    .min(1, 'Pilih dulu barang mana yang dikembalikan pembeli.'),
+  pengganti: z
+    .array(
+      z.object({
+        jenis_barang: z.enum(['produk', 'menu']),
+        barang_id: z.string().uuid(),
+        jumlah: z.number().int().positive('Jumlah minimal 1.'),
+      })
+    )
+    .optional(),
+  // Wajib hanya kalau barang penggantinya lebih murah
+  sumber_dana: z.enum(['kantor', 'kasir']).nullish(),
+  catatan: z.string().trim().max(300).nullish(),
 });
 
 router.get(
@@ -72,7 +84,6 @@ router.post(
 
 router.post(
   '/:id/konfirmasi',
-  periksa(skemaKonfirmasi),
   tangkap(async (req, res) => {
     const data = await service.konfirmasi(req.params.id, req.body, req.user);
     res.json({
@@ -91,6 +102,22 @@ router.post(
   tangkap(async (req, res) => {
     const data = await service.batal(req.params.id, req.body, req.user);
     res.json({ sukses: true, pesan: 'Transaksi dibatalkan.', data });
+  })
+);
+
+/** Tukar barang pada transaksi yang sudah dibayar. */
+router.post(
+  '/:id/tukar',
+  periksa(skemaTukar),
+  tangkap(async (req, res) => {
+    const data = await service.tukar(req.params.id, req.body, req.user);
+    const pesan =
+      data.selisih > 0
+        ? `Penukaran tercatat. Pembeli menambah bayar Rp ${data.selisih.toLocaleString('id-ID')}.`
+        : data.selisih < 0
+          ? `Penukaran tercatat. Kembalikan uang Rp ${Math.abs(data.selisih).toLocaleString('id-ID')} ke pembeli.`
+          : 'Penukaran tercatat. Harganya pas, tidak ada uang yang berpindah.';
+    res.json({ sukses: true, pesan, data });
   })
 );
 

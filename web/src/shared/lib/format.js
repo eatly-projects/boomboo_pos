@@ -94,14 +94,15 @@ export function nomorWaTampil(nomor) {
 }
 
 /** Label metode pembayaran, ditulis utuh tanpa singkatan yang membingungkan. */
-export const labelMetode = (m) =>
-  ({ qris: 'QRIS', tunai: 'Tunai' })[m] || 'Belum dipilih';
+export const labelMetode = (m) => (m === 'qris' ? 'QRIS' : 'Belum dipilih');
 
 export const labelStatus = (s) =>
   ({
     menunggu_pembayaran: 'Menunggu pembayaran',
     selesai: 'Selesai',
     batal: 'Dibatalkan',
+    ditukar: 'Ditukar',
+    terbuka: 'Masih terbuka',
   })[s] || s;
 
 export const labelStatusStruk = (s) =>
@@ -137,4 +138,20 @@ export const labelAksi = (a) =>
     unggah_media: 'Mengunggah bukti bayar',
     hapus_media: 'Menghapus bukti bayar',
     ubah_pengaturan: 'Mengubah pengaturan',
+    tukar_barang: 'Menukar barang',
+    buka_bill: 'Membuka bill',
+    tambah_barang_bill: 'Menambah barang ke bill',
+    hapus_barang_bill: 'Mencabut barang dari bill',
+    tutup_bill: 'Menutup bill',
+    batal_bill: 'Membatalkan bill',
   })[a] || a;
+
+/** "3720 detik" -> "1 jam 2 menit" */
+export function lamanya(detik) {
+  if (detik == null) return '-';
+  const jam = Math.floor(detik / 3600);
+  const menit = Math.floor((detik % 3600) / 60);
+  if (jam === 0 && menit === 0) return 'baru saja';
+  if (jam === 0) return `${menit} menit`;
+  return menit === 0 ? `${jam} jam` : `${jam} jam ${menit} menit`;
+}

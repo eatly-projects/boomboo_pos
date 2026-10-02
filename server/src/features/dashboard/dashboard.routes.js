@@ -30,16 +30,35 @@ router.get('/per-kasir', tangkap(async (req, res) => {
   res.json({ sukses: true, data: await service.perKasir(req.query) });
 }));
 
+router.get('/stok-keluar', tangkap(async (req, res) => {
+  res.json({ sukses: true, data: await service.stokKeluarBukanJualan(req.query) });
+}));
+
+router.get('/pengembalian-uang', tangkap(async (req, res) => {
+  res.json({ sukses: true, data: await service.pengembalianUang(req.query) });
+}));
+
 /** Semua angka dashboard dalam satu panggilan, supaya layar cepat terisi. */
 router.get('/', tangkap(async (req, res) => {
-  const [sorotan, ringkasan, harian, terlaris, perKasir] = await Promise.all([
-    service.sorotan(),
-    service.ringkasan(req.query),
-    service.harian(req.query),
-    service.terlaris(req.query),
-    service.perKasir(req.query),
-  ]);
-  res.json({ sukses: true, data: { sorotan, ringkasan, harian, terlaris, per_kasir: perKasir } });
+  const [sorotan, ringkasan, harian, terlaris, perKasir, stokKeluar, pengembalian] =
+    await Promise.all([
+      service.sorotan(),
+      service.ringkasan(req.query),
+      service.harian(req.query),
+      service.terlaris(req.query),
+      service.perKasir(req.query),
+      service.stokKeluarBukanJualan(req.query),
+      service.pengembalianUang(req.query),
+    ]);
+  res.json({
+    sukses: true,
+    data: {
+      sorotan, ringkasan, harian, terlaris,
+      per_kasir: perKasir,
+      stok_keluar: stokKeluar,
+      pengembalian_uang: pengembalian,
+    },
+  });
 }));
 
 export default router;

@@ -1,11 +1,11 @@
 # Brainstorming — Aplikasi Kasir (POS) Boomboo
 
 Catatan hidup hasil diskusi Lutfi x Claude. Ditambah setiap kali kita berdiskusi.
-**Belum ada satu baris kode pun yang ditulis.**
+Catatan ini ditulis sebelum ada kode. Keputusan di dalamnya tetap berlaku sebagai acuan.
 
 - **Dibuat:** 25 September 2026
-- **Terakhir diperbarui:** 25 September 2026 (Sesi 1)
-- **Tahap sekarang:** Kebutuhan dan susunan teknologi sudah lengkap. Menunggu 4 pertanyaan terakhir (J1–J4), setelah itu spesifikasi ditulis
+- **Terakhir diperbarui:** 2 Oktober 2026 (Sesi 3)
+- **Tahap sekarang:** Aplikasi sudah jadi dan sudah terpasang. Permintaan perubahan R1–R6.2 selesai dan lulus uji
 
 ---
 
@@ -348,3 +348,109 @@ Tanpa ini, tidak bisa jualan sama sekali.
 - Seluruh **Gelombang 1, 2, dan 3** dikerjakan sekaligus: basis data, backend, frontend, data contoh, dan uji alur kasir otomatis.
 - Rincian apa yang sudah jadi, apa yang sudah diperiksa, dan apa yang belum ada di **`docs/PROGRESS.md`**.
 - Keadaan sekarang: aplikasi bisa dipakai berjualan dari awal sampai struk terkirim, dan sudah lulus 27 pemeriksaan otomatis (`npm run uji`).
+
+---
+
+## 10. Sesi 3 — 2 Oktober 2026: permintaan perubahan dari user
+
+> **Status: masih brainstorming. Lutfi meminta JANGAN koding dulu.**
+> Sisa waktu sampai event: **5 hari**.
+
+### 10.1 Permintaan Lutfi (apa adanya)
+
+| No | Permintaan |
+|---|---|
+| **R1** | **Hapus seluruh konsep tunai.** Semua pembayaran lewat QRIS. Fitur dan datanya ikut dihapus |
+| **R2** | **Hapus unggah gambar bukti bayar.** User tidak mau menyimpan gambar apa pun. Datanya ikut dihapus |
+| **R3** | **Tambah konsep Open Bill.** Menu baru. Kasir memasukkan nama + nomor telepon di awal, bill terus berjalan, stok langsung berkurang saat barang diinput, transaksi baru berhenti saat kasir menutupnya |
+| **R4** | **Tambah konsep void / tukar barang.** Pembeli sudah bertransaksi lalu menukar barang. Barang pengganti bisa lebih mahal atau lebih murah, bisa lebih dari satu barang. Stok barang yang dikembalikan harus bertambah otomatis |
+| **R5** | **Catat pengurangan stok di luar penjualan**, misalnya diambil untuk sample promosi atau untuk karyawan |
+| **R6** | **Hapus foto produk dan menu.** Cukup nama dan ikon |
+| **R6.1** | **Toggle "dijual satuan" pada produk.** Kalau menyala, muncul di layar kasir. Kalau mati, stoknya tetap dicatat tapi tidak dijual satuan (contoh: mie) |
+| **R6.2** | **Menu bisa berisi produk berstok.** Saat menu terjual, stok produk penyusunnya ikut berkurang. Menu tanpa penyusun tetap boleh ada |
+
+### 10.2 Keadaan data yang terdampak (per 2 Oktober 2026)
+
+| | Jumlah |
+|---|---|
+| Transaksi tunai (akan dihapus) | 72 dari 186 |
+| Transaksi QRIS | 105 |
+| Berkas bukti bayar (akan dihapus) | 9 |
+| Produk/menu berfoto | 0 dari 21 — jadi penghapusan foto tidak menghapus data apa pun |
+
+### 10.3 Benturan dengan keputusan lama
+
+| Keputusan lama | Jadi apa |
+|---|---|
+| **K1** Produk dan Menu terpisah total, bahan baku Menu tidak dihitung | **Dibatalkan** oleh R6.2. Menu sekarang boleh punya penyusun berstok |
+| **K4** Metode bayar QRIS dan Tunai | **Diubah** oleh R1. Tinggal QRIS |
+| **K6** Stok berkurang hanya setelah pembayaran dikonfirmasi | **Diberi pengecualian** oleh R3. Di Open Bill, stok berkurang saat barang diinput |
+| **K12 & K20** Bukti bayar diunggah ke bagian Media yang berdiri sendiri | **Dibatalkan** oleh R2 |
+| **K27** Produk dan Menu punya foto masing-masing | **Dibatalkan** oleh R6 |
+
+### 10.4 Masalah besar yang muncul dari gabungan R1 dan R4
+
+Tanpa tunai, **tidak ada uang tunai di laci sama sekali**. QRIS statis juga tidak bisa dipakai mengembalikan uang. Jadi kalau barang pengganti pada R4 ternyata **lebih murah**, selisihnya tidak bisa dikembalikan ke pembeli dengan cara apa pun yang ada di sistem.
+
+Ini bukan masalah teknis, ini masalah aturan toko yang harus diputuskan Lutfi. Lihat pertanyaan **P1**.
+
+### 10.5 Pertanyaan Claude — menunggu jawaban Lutfi
+
+Lihat bagian 11 untuk rinciannya beserta rekomendasi.
+
+
+## 11. Keputusan Sesi 3 (2 Oktober 2026)
+
+| No | Keputusan |
+|---|---|
+| **K28** | **Cara beli di hari H: campuran.** Sebagian antre-bayar-pergi, sebagian duduk dan pesan berkali-kali. Open Bill wajib ada, tapi layar kasir cepat tetap yang utama |
+| **K29** | **Seluruh perubahan R1-R6.2 dikerjakan hari ini juga.** Lutfi sadar Claude memperkirakan 5-6 hari kerja, dan tetap meminta semuanya selesai hari ini |
+| **K30** | **Pengembalian uang memakai uang tunai**, dengan sumber dana dicatat: **uang kantor** atau **ditalangi kasir** (kasir di-reimburse belakangan). Sistem harus menyediakan pilihan itu dan laporannya |
+| **K31** | **Alur tukar barang** (ide user, logika dirancang Claude): cari transaksi lewat nomor → tombol Tukar Barang → pilih barang yang dikembalikan + barang pengganti → sistem hitung selisih → transaksi lama ditandai `ditukar`, transaksi baru dibuat membawa tautan ke transaksi lama, rincian penukaran, dan selisihnya |
+| **K32** | **Harga saat menukar:** barang yang tetap memakai harga beku dari transaksi lama, barang pengganti memakai harga yang berlaku hari ini |
+| **K33** | **Omzet harian tidak boleh bergeser karena penukaran.** Tiap transaksi menyimpan "uang yang benar-benar bergerak" (`uang_masuk`), jadi uang hari lama tetap tercatat di hari lama, dan hanya selisihnya yang tercatat di hari penukaran |
+| **K34** | Gambar QRIS di Pengaturan **tetap disimpan** (itu berkas pengaturan, bukan data transaksi) |
+| **K35** | Alasan pengurangan stok ditambah: **sample promosi, konsumsi karyawan, hadiah/giveaway**. Totalnya 7 pilihan, dan ada laporan nilai barang keluar bukan karena dijual |
+| **K36** | Toggle "dijual satuan" **menyala** secara bawaan. Produk boleh tidak dijual satuan dan tidak dipakai menu mana pun |
+| **K37** | Menu yang penyusunnya habis **diblokir**, dan kasir diberi tahu penyusun mana yang kurang. Layar kasir menampilkan **sisa porsi** dihitung dari penyusun paling sedikit |
+| **K38** | **Menu tidak boleh berisi menu lain.** Satu lapis saja |
+| **K39** | Menu boleh punya penyusun **sebagian** - hanya barang yang stoknya memang dicatat |
+| **K40** | **Open Bill:** tiap bill punya nomor sendiri, bisa dicari lewat nama/nomor telepon, punya kolom penanda opsional (contoh "meja 4"), bisa dilanjutkan dari kasir mana pun, bisa dibatalkan (stok kembali), dan menampilkan sudah berapa lama terbuka |
+
+---
+
+## 12. Hasil pengerjaan Sesi 3 (2 Oktober 2026)
+
+Seluruh R1–R6.2 selesai dalam satu hari, sesuai permintaan K29.
+
+### Yang diuji dan hasilnya
+
+`npm run uji` sekarang berisi **79 pemeriksaan dalam 12 bagian, semuanya lulus**.
+
+| Bagian | Yang dibuktikan |
+|---|---|
+| 1 | Tidak ada transaksi tunai tersisa, kolomnya pun sudah hilang, dan metode selain QRIS ditolak |
+| 2 | Alamat unggah foto dan tabel media sudah mati (HTTP 404) |
+| 3 | Produk yang tidak dijual satuan tidak muncul di kasir, stoknya tetap dicatat, dan menjualnya ditolak |
+| 4 | Sisa porsi menu tampil, stok penyusun baru berkurang setelah dibayar, sesuai resep |
+| 5 | Menjual menu melebihi sisa porsi ditolak, dan pesannya menyebut penyusun yang kurang |
+| 6 | Tujuh alasan stok keluar tersedia, laporan memisahkan "sengaja" dari "kerusakan" |
+| 7 | Open Bill: stok langsung berkurang saat barang masuk, dicabut berarti kembali, ditutup jadi transaksi, **stok tidak dipotong dua kali**, struk langsung masuk antrian |
+| 8 | Bill dibatalkan mengembalikan seluruh stok, dan tidak bisa ditambah barang lagi |
+| 9 | Tukar lebih mahal: selisih positif, stok bergerak dua arah, transaksi lama ditandai `ditukar`, **uang hari lama tidak ikut pindah** |
+| 10 | Tukar lebih murah: tanpa sumber dana ditolak, pengembalian uang tercatat, laporan talangan kasir terisi |
+| 11 | Beli melebihi stok ditolak, kurangi stok tanpa alasan ditolak, produk yang dipakai menu tidak bisa diarsipkan, dan **buku besar stok cocok dengan angka stok di semua produk** |
+| 12 | Semua aksi baru masuk log aktivitas beserta nama pelakunya |
+
+### Pelajaran teknis dari sesi ini
+
+| Hal | Isinya |
+|---|---|
+| **Uji harus tahan kasir lain** | Pemeriksaan stok yang semula membandingkan angka stok sebelum dan sesudah jadi sering salah, karena pengisi data contoh sedang berjualan di saat yang sama. Sekarang angkanya dihitung dari **kartu stok milik operasi itu sendiri** (disaring per nomor bill atau nomor transaksi), jadi hasilnya benar walaupun ada 7 kasir bekerja bersamaan |
+| **Migrasi harus dicatat** | Dulu `jalankan.js` mengulang semua berkas dan gagal di pemicu yang sudah ada. Sekarang ada tabel `migrasi_terpasang`, dan tiap berkas dibungkus BEGIN/COMMIT |
+| **Mengisi data contoh lama sekali** | Tiap perintah bolak-balik ke Supabase, jadi 168 transaksi butuh lebih dari setengah jam. Bagian Open Bill dipisah jadi `npm run seed:bill` supaya bisa dijalankan sendiri kalau yang utama putus di tengah |
+
+### Yang belum sempat dilihat di layar
+
+Halaman **Open Bill** dan **Tukar Barang** lulus uji lewat API dan `npm run build` berhasil,
+tapi belum pernah dibuka di peramban karena ekstensi peramban sedang terputus.

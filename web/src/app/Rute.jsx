@@ -22,9 +22,11 @@ const StokOpname = lazy(() => import('@/features/stok/pages/StokOpname.jsx'));
 const HalamanTransaksi = lazy(() => import('@/features/transaksi/pages/HalamanTransaksi.jsx'));
 const DetailTransaksi = lazy(() => import('@/features/transaksi/pages/DetailTransaksi.jsx'));
 const AntrianStruk = lazy(() => import('@/features/struk/pages/AntrianStruk.jsx'));
+const HalamanBill = lazy(() => import('@/features/bill/pages/HalamanBill.jsx'));
+const DetailBill = lazy(() => import('@/features/bill/pages/DetailBill.jsx'));
+const TukarBarang = lazy(() => import('@/features/transaksi/pages/TukarBarang.jsx'));
 const StrukPublik = lazy(() => import('@/features/struk/pages/StrukPublik.jsx'));
 const KontakWhatsapp = lazy(() => import('@/features/struk/pages/KontakWhatsapp.jsx'));
-const HalamanMedia = lazy(() => import('@/features/media/pages/HalamanMedia.jsx'));
 const HalamanLog = lazy(() => import('@/features/log/pages/HalamanLog.jsx'));
 const HalamanUser = lazy(() => import('@/features/user/pages/HalamanUser.jsx'));
 const HalamanPengaturan = lazy(() => import('@/features/pengaturan/pages/HalamanPengaturan.jsx'));
@@ -67,6 +69,8 @@ function IsiRute() {
         <Route path="/" element={<Navigate to="/kasir" replace />} />
         <Route path="/kasir" element={<Kasir />} />
         <Route path="/kasir/bayar/:id" element={<Pembayaran />} />
+        <Route path="/bill" element={<HalamanBill />} />
+        <Route path="/bill/:id" element={<DetailBill />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/produk" element={<HalamanProduk />} />
         <Route path="/menu" element={<HalamanMenu />} />
@@ -75,9 +79,9 @@ function IsiRute() {
         <Route path="/stok/:id" element={<KartuStok />} />
         <Route path="/transaksi" element={<HalamanTransaksi />} />
         <Route path="/transaksi/:id" element={<DetailTransaksi />} />
+        <Route path="/transaksi/:id/tukar" element={<TukarBarang />} />
         <Route path="/antrian-struk" element={<AntrianStruk />} />
         <Route path="/kontak" element={<KontakWhatsapp />} />
-        <Route path="/media" element={<HalamanMedia />} />
         <Route path="/log" element={<HalamanLog />} />
         <Route path="/user" element={<HalamanUser />} />
         <Route path="/pengaturan" element={<HalamanPengaturan />} />

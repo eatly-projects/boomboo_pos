@@ -31,7 +31,7 @@ export async function publik(kode) {
   const { rows } = await kueri(
     `select id, nomor, kode_struk, status, metode_bayar, subtotal,
             diskon_jenis, diskon_nilai, diskon_rupiah, total,
-            uang_diterima, kembalian, nama_pembeli, nama_kasir,
+            nama_pembeli, nama_kasir, ditukar_dari_id,
             dibuat_pada, dikonfirmasi_pada
        from transaksi
       where kode_struk = $1 and status = 'selesai'`,

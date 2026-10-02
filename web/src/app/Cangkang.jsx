@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   LuCalculator, LuLayoutDashboard, LuPackage, LuUtensils, LuBoxes,
-  LuReceipt, LuSend, LuImage, LuHistory, LuUsers, LuSettings,
+  LuReceipt, LuSend, LuHistory, LuUsers, LuSettings, LuNotebookPen,
   LuMenu, LuX, LuLogOut, LuPhone, LuChevronRight,
 } from 'react-icons/lu';
 import { useAuth } from '@/features/auth/auth.store';
@@ -11,6 +11,7 @@ import { cn } from '@/shared/lib/utils';
 
 const MENU_UTAMA = [
   { ke: '/kasir', label: 'Kasir', ikon: LuCalculator },
+  { ke: '/bill', label: 'Open Bill', ikon: LuNotebookPen },
   { ke: '/dashboard', label: 'Dashboard', ikon: LuLayoutDashboard },
   { ke: '/transaksi', label: 'Transaksi', ikon: LuReceipt },
   { ke: '/stok', label: 'Stok', ikon: LuBoxes },
@@ -27,7 +28,6 @@ const MENU_STRUK = [
 ];
 
 const MENU_LAIN = [
-  { ke: '/media', label: 'Media Bukti Bayar', ikon: LuImage },
   { ke: '/log', label: 'Log Aktivitas', ikon: LuHistory },
   { ke: '/user', label: 'User', ikon: LuUsers },
   { ke: '/pengaturan', label: 'Pengaturan', ikon: LuSettings },

@@ -16,6 +16,7 @@ import * as produkService from '../src/features/produk/produk.service.js';
 import * as menuService from '../src/features/menu/menu.service.js';
 import * as stokService from '../src/features/stok/stok.service.js';
 import * as trxService from '../src/features/transaksi/transaksi.service.js';
+import * as billService from '../src/features/bill/bill.service.js';
 
 /* ------------------------------------------------------------------ */
 /* Alat bantu acak                                                     */
@@ -29,16 +30,23 @@ const peluang = (persen) => Math.random() * 100 < persen;
 /* ------------------------------------------------------------------ */
 const KATA_SANDI = 'boomboo123';
 
+// Dua akun pertama adalah akun ASLI milik tim, kata sandinya berbeda dan
+// diambil dari peubah lingkungan supaya tidak tertulis di dalam kode.
+// Tiga sisanya akun contoh yang dipakai data dummy.
+const SANDI_ASLI = process.env.SANDI_AKUN_ASLI || KATA_SANDI;
+
 const DAFTAR_USER = [
+  { nama: 'Lutfi Apriamto', email: 'lutfi_new@boomboo.id', role: 'pemilik', sandi: SANDI_ASLI, asli: true },
+  { nama: 'Ari', email: 'ari_manager@boomboo.id', role: 'manajer', sandi: SANDI_ASLI, asli: true },
   { nama: 'Lutfi Hakim', email: 'lutfi@boomboo.id', role: 'pemilik' },
   { nama: 'Sari Wulandari', email: 'sari@boomboo.id', role: 'manajer' },
   { nama: 'Bagus Prakoso', email: 'bagus@boomboo.id', role: 'kasir' },
 ];
 
 async function buatUser() {
-  const hash = await bcrypt.hash(KATA_SANDI, 10);
   const hasil = [];
   for (const u of DAFTAR_USER) {
+    const hash = await bcrypt.hash(u.sandi || KATA_SANDI, 10);
     const { rows } = await kueri(
       `insert into users (nama, email, password_hash, role)
        values ($1,$2,$3,$4)
@@ -67,18 +75,50 @@ const PRODUK = [
   { nama: 'Kerupuk Bawang 80g', harga: 20000, stok: 140 },
   { nama: 'Kaos Boomboo', harga: 120000, stok: 36 },
   { nama: 'Tote Bag Boomboo', harga: 65000, stok: 52 },
+
+  // Bahan yang stoknya dicatat untuk keperluan menu (permintaan R6.1).
+  // Air mineral dijual satuan DAN dipakai sebagai penyusun menu.
+  { nama: 'Air Mineral 600ml', harga: 5000, stok: 300 },
+  // Mie instan hanya dipakai di dalam menu, tidak dijual sendiri.
+  { nama: 'Mie Instan Goreng', harga: 8000, stok: 220, dijual_satuan: false },
+  { nama: 'Telur Ayam', harga: 4000, stok: 180, dijual_satuan: false },
 ];
 
 const MENU = [
+  // Menu TANPA penyusun: nasi dan ayamnya tidak dihitung satuan (K39)
   { nama: 'Nasi Ayam Sambal Bawang', harga: 30000 },
   { nama: 'Nasi Ayam Sambal Daun Jeruk', harga: 30000 },
-  { nama: 'Nasi Telur Sambal Cumi', harga: 28000, harga_diskon: 25000, nama_diskon: 'Promo Makan Siang' },
   { nama: 'Nasi Goreng Boombastis', harga: 32000 },
-  { nama: 'Indomie Sambal Boomboo', harga: 20000 },
-  { nama: 'Paket Komplit Nasi Ayam + Es Teh', harga: 40000, harga_diskon: 35000, nama_diskon: 'Paket Hemat' },
   { nama: 'Es Teh Manis', harga: 8000 },
   { nama: 'Es Jeruk Peras', harga: 10000 },
-  { nama: 'Air Mineral 600ml', harga: 5000 },
+
+  // Menu DENGAN penyusun berstok (permintaan R6.2)
+  {
+    nama: 'Mie Boombastis Spesial',
+    harga: 25000,
+    penyusun: [['Mie Instan Goreng', 1], ['Telur Ayam', 1]],
+  },
+  {
+    nama: 'Paket Mie + Air Mineral',
+    harga: 30000,
+    harga_diskon: 27000,
+    nama_diskon: 'Paket Hemat',
+    penyusun: [['Mie Instan Goreng', 1], ['Air Mineral 600ml', 1]],
+  },
+  {
+    nama: 'Paket Komplit Nasi Ayam + Es Teh',
+    harga: 40000,
+    harga_diskon: 35000,
+    nama_diskon: 'Paket Hemat',
+    penyusun: [['Air Mineral 600ml', 1]],
+  },
+  {
+    nama: 'Nasi Telur Sambal Cumi',
+    harga: 28000,
+    harga_diskon: 25000,
+    nama_diskon: 'Promo Makan Siang',
+    penyusun: [['Telur Ayam', 2]],
+  },
 ];
 
 async function buatKatalog(pemilik, manajer) {
@@ -94,9 +134,18 @@ async function buatKatalog(pemilik, manajer) {
     produk.push({ ...dibuat, stok_awal: stok });
   }
 
+  const perNama = new Map(produk.map((p) => [p.nama, p.id]));
+
   const menu = [];
   for (const m of MENU) {
-    menu.push(await menuService.tambah(m, manajer));
+    const { penyusun, ...data } = m;
+    if (penyusun) {
+      data.komponen = penyusun.map(([nama, jumlah]) => ({
+        produk_id: perNama.get(nama),
+        jumlah,
+      }));
+    }
+    menu.push(await menuService.tambah(data, manajer));
   }
 
   return { produk, menu };
@@ -135,11 +184,13 @@ const namaAcak = () => `${acakDari(NAMA_DEPAN)} ${acakDari(NAMA_BELAKANG)}`;
 /** Menyusun satu keranjang yang masuk akal. */
 function susunKeranjang(produk, menu) {
   const item = [];
+  // Hanya produk yang dijual satuan yang bisa masuk keranjang (R6.1)
+  const bisaDijual = produk.filter((p) => p.dijual_satuan !== false);
   const jumlahProduk = acakInt(0, 3);
   const jumlahMenu = acakInt(0, 3);
 
   for (let i = 0; i < jumlahProduk; i++) {
-    const p = acakDari(produk);
+    const p = acakDari(bisaDijual);
     item.push({ jenis_barang: 'produk', barang_id: p.id, jumlah: acakInt(1, 3) });
   }
   for (let i = 0; i < jumlahMenu; i++) {
@@ -188,13 +239,8 @@ async function buatTransaksiHarian({ produk, menu, kasirTersedia, jumlah }) {
       continue;
     }
 
-    const metode = peluang(62) ? 'qris' : 'tunai';
-    const uang =
-      metode === 'tunai'
-        ? Math.ceil(trx.total / 5000) * 5000 + acakDari([0, 0, 5000, 10000, 20000])
-        : null;
-
-    await trxService.konfirmasi(trx.id, { metode_bayar: metode, uang_diterima: uang }, kasir);
+    // Semua pembayaran lewat QRIS (permintaan R1)
+    await trxService.konfirmasi(trx.id, {}, kasir);
 
     // sekitar 7 dari 10 pembeli mau memberikan nomor WhatsApp
     if (peluang(70)) {
@@ -211,6 +257,77 @@ async function buatTransaksiHarian({ produk, menu, kasirTersedia, jumlah }) {
   }
 
   return dibuat;
+}
+
+/* ------------------------------------------------------------------ */
+/* 4b. Open Bill                                                       */
+/* ------------------------------------------------------------------ */
+
+const PENANDA = ['Meja 1', 'Meja 2', 'Meja 3', 'Meja 5', 'Dekat panggung', 'Baju merah', 'Rombongan kantor'];
+
+/**
+ * Membuat beberapa bill: sebagian masih terbuka supaya halamannya ada isinya,
+ * sebagian sudah ditutup dan dibayar supaya alurnya terbukti jalan sampai
+ * selesai, dan satu dibatalkan supaya pengembalian stoknya ikut tercatat.
+ */
+async function buatBill({ produk, menu, kasirTersedia }) {
+  const bisaDijual = produk.filter((p) => p.dijual_satuan !== false);
+  const hasil = { terbuka: 0, selesai: 0, batal: 0 };
+
+  for (let i = 0; i < 9; i++) {
+    const kasir = acakDari(kasirTersedia);
+    const bill = await billService.buka(
+      {
+        nama_pembeli: namaAcak(),
+        nomor_wa: peluang(80) ? nomorAcak() : null,
+        penanda: peluang(70) ? acakDari(PENANDA) : null,
+      },
+      kasir
+    );
+
+    // Pesanan datang bertahap, kadang dari kasir yang berbeda
+    for (let n = 0; n < acakInt(2, 5); n++) {
+      const pakaiMenu = peluang(60);
+      const barang = pakaiMenu ? acakDari(menu) : acakDari(bisaDijual);
+      try {
+        await billService.tambahItem(
+          bill.id,
+          {
+            jenis_barang: pakaiMenu ? 'menu' : 'produk',
+            barang_id: barang.id,
+            jumlah: acakInt(1, 2),
+          },
+          acakDari(kasirTersedia)
+        );
+      } catch {
+        // stok habis, lewati saja
+      }
+    }
+
+    if (i < 4) {
+      hasil.terbuka++;
+      continue;
+    }
+    if (i === 4) {
+      await billService.batal(bill.id, { alasan: 'Pembeli pergi tanpa memesan lagi' }, kasir);
+      hasil.batal++;
+      continue;
+    }
+
+    try {
+      const trx = await billService.tutup(
+        bill.id,
+        peluang(30) ? { diskon_jenis: 'persen', diskon_nilai: 10 } : {},
+        kasir
+      );
+      await trxService.konfirmasi(trx.id, {}, kasir);
+      hasil.selesai++;
+    } catch {
+      hasil.terbuka++;
+    }
+  }
+
+  return hasil;
 }
 
 /* ------------------------------------------------------------------ */
@@ -295,7 +412,8 @@ async function jalankan() {
     return;
   }
 
-  const [pemilik, manajer, kasir] = await buatUser();
+  const semuaUser = await buatUser();
+  const [, , pemilik, manajer, kasir] = semuaUser;
   console.log(`\n1. User dibuat: ${DAFTAR_USER.length} orang`);
   DAFTAR_USER.forEach((u) => console.log(`   - ${u.nama.padEnd(18)} ${u.email.padEnd(20)} (${u.role})`));
 
@@ -336,6 +454,12 @@ async function jalankan() {
     const tgl = `${String(hari.d).padStart(2, '0')}/${String(hari.m).padStart(2, '0')}`;
     console.log(`   ${tgl}${akhirPekan ? ' (akhir pekan)' : '              '}  ${String(dibuat.length).padStart(3)} transaksi`);
   }
+
+  const bill = await buatBill({ produk, menu, kasirTersedia: [pemilik, manajer, kasir] });
+  console.log(
+    `
+5. Open Bill: ${bill.terbuka} masih terbuka, ${bill.selesai} sudah dibayar, ${bill.batal} dibatalkan`
+  );
 
   // Sebagian struk ditandai sudah terkirim, sisanya sengaja dibiarkan
   // menunggu supaya halaman Antrian Kirim Struk ada isinya.
@@ -379,6 +503,15 @@ async function tampilkanRingkasan() {
   console.log(`   Pergerakan stok       : ${d.pergerakan}`);
   console.log(`   Log aktivitas         : ${d.log}`);
   console.log(`   Kontak WhatsApp       : ${d.kontak}`);
+  const { rows: b } = await kueri(`
+    select count(*)::int as semua,
+           count(*) filter (where status='terbuka')::int as terbuka,
+           (select count(*)::int from menu_komponen) as komponen,
+           (select count(*)::int from produk where not dijual_satuan) as tak_dijual_satuan
+      from bill`);
+  console.log(`   Bill                  : ${b[0].semua}  (${b[0].terbuka} masih terbuka)`);
+  console.log(`   Penyusun menu         : ${b[0].komponen} baris`);
+  console.log(`   Produk bukan satuan   : ${b[0].tak_dijual_satuan}`);
   console.log(`   Struk menunggu kirim  : ${d.antrian}`);
   console.log(`   Total omzet           : Rp ${Number(d.omzet).toLocaleString('id-ID')}`);
 

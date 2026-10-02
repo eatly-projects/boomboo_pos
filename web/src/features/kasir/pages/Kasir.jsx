@@ -29,7 +29,11 @@ export default function Kasir() {
   const keranjang = useKeranjang();
   const { total, jumlahBarang } = useHitunganKeranjang();
 
-  const produk = useQuery({ queryKey: ['produk'], queryFn: () => ambil('/produk') });
+  // Hanya produk yang saklarnya menyala yang boleh muncul di layar kasir (R6.1)
+  const produk = useQuery({
+    queryKey: ['produk', 'kasir'],
+    queryFn: () => ambil('/produk', { params: { hanya_dijual_satuan: true } }),
+  });
   const menu = useQuery({ queryKey: ['menu'], queryFn: () => ambil('/menu') });
 
   const sedangMemuat = produk.isLoading || menu.isLoading;
@@ -116,13 +120,7 @@ export default function Kasir() {
           {sedangMemuat ? (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
               {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="overflow-hidden rounded-2xl border-2 border-netral-200">
-                  <Rangka className="aspect-4/3 rounded-none" />
-                  <div className="space-y-2 p-2.5">
-                    <Rangka className="h-4 w-full" />
-                    <Rangka className="h-4 w-1/2" />
-                  </div>
-                </div>
+                <Rangka key={i} className="h-36 rounded-2xl" />
               ))}
             </div>
           ) : barang.length === 0 ? (

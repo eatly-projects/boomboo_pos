@@ -8,9 +8,9 @@ import produkRoutes from './features/produk/produk.routes.js';
 import menuRoutes from './features/menu/menu.routes.js';
 import stokRoutes from './features/stok/stok.routes.js';
 import transaksiRoutes from './features/transaksi/transaksi.routes.js';
+import billRoutes from './features/bill/bill.routes.js';
 import strukRoutes from './features/struk/struk.routes.js';
 import dashboardRoutes from './features/dashboard/dashboard.routes.js';
-import mediaRoutes from './features/media/media.routes.js';
 import logRoutes from './features/log/log.routes.js';
 import pengaturanRoutes from './features/pengaturan/pengaturan.routes.js';
 
@@ -50,9 +50,9 @@ app.use('/api/produk', produkRoutes);
 app.use('/api/menu', menuRoutes);
 app.use('/api/stok', stokRoutes);
 app.use('/api/transaksi', transaksiRoutes);
+app.use('/api/bill', billRoutes);
 app.use('/api/struk', strukRoutes);
 app.use('/api/dashboard', dashboardRoutes);
-app.use('/api/media', mediaRoutes);
 app.use('/api/log', logRoutes);
 app.use('/api/pengaturan', pengaturanRoutes);
 

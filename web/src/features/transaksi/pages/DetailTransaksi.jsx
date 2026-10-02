@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   LuArrowLeft, LuTriangleAlert, LuExternalLink, LuBan, LuCopy, LuCheck,
+  LuRepeat, LuArrowRight, LuWallet, LuUser, LuNotebookPen,
 } from 'react-icons/lu';
 import toast from 'react-hot-toast';
 import { ambil, api, denganToast } from '@/shared/lib/api';
@@ -15,7 +16,8 @@ import { Dialog, DialogContent, DialogFooter } from '@/shared/components/ui/dial
 import { KepalaHalaman, Rangka, Label, Pemberitahuan } from '@/shared/components/ui/tampilan';
 
 const warnaStatus = (s) =>
-  ({ selesai: 'hijau', menunggu_pembayaran: 'kuning', batal: 'merah' })[s] || 'netral';
+  ({ selesai: 'hijau', menunggu_pembayaran: 'kuning', batal: 'merah', ditukar: 'kuning' })[s] ||
+  'netral';
 
 function Baris({ label, nilai, tebal }) {
   return (
@@ -164,12 +166,7 @@ export default function DetailTransaksi() {
           <div className="mt-1 border-t-2 border-netral-200 pt-2">
             <Baris label="Total" nilai={rupiah(t.total)} tebal />
           </div>
-          {t.metode_bayar === 'tunai' && (
-            <>
-              <Baris label="Uang diterima" nilai={rupiah(t.uang_diterima)} />
-              <Baris label="Kembalian" nilai={rupiah(t.kembalian)} />
-            </>
-          )}
+
         </div>
       </div>
 
@@ -197,8 +194,120 @@ export default function DetailTransaksi() {
         )}
       </div>
 
+      {/* Jejak penukaran */}
+      {(t.ditukar_dari_id || t.ditukar_ke_id || t.penukaran?.length > 0) && (
+        <div className="mb-3 rounded-2xl border-2 border-terakota-500 bg-biji-50 p-4">
+          <p className="mb-2 flex items-center gap-2 font-bold text-coklat-900">
+            <LuRepeat className="size-4.5 text-terakota-500" /> Riwayat penukaran
+          </p>
+
+          {t.ditukar_ke_id && (
+            <p className="text-sm text-coklat-600">
+              Transaksi ini sudah ditukar. Penggantinya{' '}
+              <Link
+                to={`/transaksi/${t.ditukar_ke_id}`}
+                className="angka font-bold text-biru-500 hover:underline"
+              >
+                {t.nomor_transaksi_baru}
+              </Link>
+              .
+            </p>
+          )}
+
+          {t.ditukar_dari_id && (
+            <p className="text-sm text-coklat-600">
+              Transaksi ini hasil penukaran dari{' '}
+              <Link
+                to={`/transaksi/${t.ditukar_dari_id}`}
+                className="angka font-bold text-biru-500 hover:underline"
+              >
+                {t.nomor_transaksi_lama}
+              </Link>
+              .
+            </p>
+          )}
+
+          {t.penukaran?.length > 0 && (
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-coklat-400">
+                  Dikembalikan pembeli
+                </p>
+                {t.penukaran
+                  .filter((p) => p.arah === 'dikembalikan')
+                  .map((p) => (
+                    <p key={p.id} className="angka text-sm text-coklat-900">
+                      {p.jumlah}x {p.nama_barang}{' '}
+                      <span className="text-coklat-400">({rupiah(p.subtotal)})</span>
+                    </p>
+                  ))}
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-coklat-400">
+                  Diganti dengan
+                </p>
+                {t.penukaran.filter((p) => p.arah === 'pengganti').length === 0 ? (
+                  <p className="text-sm text-coklat-400">Tidak ada pengganti</p>
+                ) : (
+                  t.penukaran
+                    .filter((p) => p.arah === 'pengganti')
+                    .map((p) => (
+                      <p key={p.id} className="angka text-sm text-coklat-900">
+                        {p.jumlah}x {p.nama_barang}{' '}
+                        <span className="text-coklat-400">({rupiah(p.subtotal)})</span>
+                      </p>
+                    ))
+                )}
+              </div>
+            </div>
+          )}
+
+          {t.uang_masuk != null && t.ditukar_dari_id && (
+            <p className="angka mt-3 border-t-2 border-biji-500 pt-2 text-sm font-bold text-coklat-900">
+              Uang yang bergerak saat penukaran:{' '}
+              <span className={t.uang_masuk < 0 ? 'text-terakota-500' : 'text-boom-600'}>
+                {t.uang_masuk < 0 ? '- ' : '+ '}
+                {rupiah(Math.abs(t.uang_masuk))}
+              </span>
+            </p>
+          )}
+
+          {t.pengembalian_uang && (
+            <p className="mt-1 flex items-center gap-1.5 text-sm text-coklat-600">
+              {t.pengembalian_uang.sumber_dana === 'kasir' ? (
+                <LuUser className="size-4" />
+              ) : (
+                <LuWallet className="size-4" />
+              )}
+              Uang dikembalikan dari{' '}
+              <strong>
+                {t.pengembalian_uang.sumber_dana === 'kasir'
+                  ? `kantong ${t.pengembalian_uang.nama_user}`
+                  : 'uang kantor'}
+              </strong>
+              {t.pengembalian_uang.sumber_dana === 'kasir' &&
+                !t.pengembalian_uang.sudah_diganti &&
+                ' — belum diganti'}
+            </p>
+          )}
+        </div>
+      )}
+
+      {t.bill_id && (
+        <Pemberitahuan warna="netral" className="mb-3" ikon={LuNotebookPen}>
+          Transaksi ini berasal dari Open Bill. Stok barangnya sudah berkurang sejak dipesan.
+        </Pemberitahuan>
+      )}
+
       {/* Tindakan */}
       <div className="flex flex-wrap gap-2">
+        {t.status === 'selesai' && (
+          <Button variant="garis" asChild>
+            <Link to={`/transaksi/${t.id}/tukar`}>
+              <LuRepeat /> Tukar barang
+            </Link>
+          </Button>
+        )}
         {t.status === 'selesai' && (
           <>
             <Button variant="garis" asChild>
@@ -211,7 +320,7 @@ export default function DetailTransaksi() {
             </Button>
           </>
         )}
-        {t.status !== 'batal' && (
+        {t.status !== 'batal' && t.status !== 'ditukar' && (
           <Button variant="bahaya" onClick={() => setDialogBatal(true)}>
             <LuBan /> Batalkan transaksi
           </Button>

@@ -2,20 +2,140 @@ import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import {
-  LuPlus, LuSearch, LuPencil, LuArchive, LuArchiveRestore, LuImagePlus,
-  LuPackageOpen, LuX, LuTriangleAlert,
+  LuPlus, LuSearch, LuPencil, LuArchive, LuArchiveRestore, LuPackage,
+  LuPackageOpen, LuX, LuTriangleAlert, LuUtensils, LuTrash2, LuEyeOff, LuInfo,
 } from 'react-icons/lu';
 import { ambil, api, denganToast } from '@/shared/lib/api';
-import { rupiah, tanggalJam } from '@/shared/lib/format';
+import { rupiah, angka } from '@/shared/lib/format';
 import { Button } from '@/shared/components/ui/button';
 import { Input, InputRupiah, Kolom } from '@/shared/components/ui/input';
+import { Pilihan } from '@/shared/components/ui/select';
 import { Dialog, DialogContent, DialogFooter } from '@/shared/components/ui/dialog';
 import { KepalaHalaman, Kosong, Rangka, Label, Pemberitahuan } from '@/shared/components/ui/tampilan';
 import { cn } from '@/shared/lib/utils';
 
 const KOSONG = { nama: '', harga: '', harga_diskon: '', nama_diskon: '' };
 
-function FormBarang({ jalur, label, barang, terbuka, onTutup }) {
+/* ---------------------------------------------------------------- */
+/* Saklar sederhana                                                  */
+/* ---------------------------------------------------------------- */
+function Saklar({ nyala, onUbah, judul, keterangan }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onUbah(!nyala)}
+      className="flex w-full items-start gap-3 rounded-xl border-2 border-netral-200 p-3.5 text-left transition-colors hover:border-coklat-200"
+    >
+      <span
+        className={cn(
+          'mt-0.5 flex h-6 w-11 shrink-0 items-center rounded-full p-0.5 transition-colors',
+          nyala ? 'bg-daun-500' : 'bg-netral-300'
+        )}
+      >
+        <span
+          className={cn(
+            'size-5 rounded-full bg-white transition-transform',
+            nyala && 'translate-x-5'
+          )}
+        />
+      </span>
+      <span className="min-w-0">
+        <span className="block text-sm font-bold text-coklat-900">{judul}</span>
+        <span className="mt-0.5 block text-xs text-coklat-400">{keterangan}</span>
+      </span>
+    </button>
+  );
+}
+
+/* ---------------------------------------------------------------- */
+/* Pemilih penyusun menu                                             */
+/* ---------------------------------------------------------------- */
+function PemilihPenyusun({ komponen, setKomponen }) {
+  const produk = useQuery({
+    queryKey: ['produk', 'semua'],
+    queryFn: () => ambil('/produk'),
+  });
+  const daftar = produk.data || [];
+  const terpakai = new Set(komponen.map((k) => k.produk_id));
+  const tersedia = daftar.filter((p) => !terpakai.has(p.id));
+
+  const [pilih, setPilih] = useState('');
+
+  function tambah() {
+    if (!pilih) return toast.error('Pilih dulu produknya.');
+    setKomponen([...komponen, { produk_id: pilih, jumlah: 1 }]);
+    setPilih('');
+  }
+
+  const namaProduk = (id) => daftar.find((p) => p.id === id)?.nama || 'Produk';
+
+  return (
+    <div className="rounded-xl border-2 border-netral-200 p-3.5">
+      <p className="text-sm font-bold text-coklat-900">Penyusun dari stok</p>
+      <p className="mb-3 mt-0.5 text-xs text-coklat-400">
+        Boleh dikosongkan. Isi hanya barang yang stoknya memang Anda catat — nasi dan ayam yang
+        tidak dihitung satuan tidak perlu didaftarkan. Saat menu ini terjual, stok yang didaftarkan
+        di sini ikut berkurang.
+      </p>
+
+      {komponen.length > 0 && (
+        <div className="mb-3 space-y-2">
+          {komponen.map((k, i) => (
+            <div key={k.produk_id} className="flex items-center gap-2">
+              <span className="min-w-0 flex-1 truncate text-sm font-semibold text-coklat-900">
+                {namaProduk(k.produk_id)}
+              </span>
+              <div className="w-24">
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  value={k.jumlah}
+                  onChange={(e) => {
+                    const salinan = [...komponen];
+                    salinan[i] = { ...k, jumlah: Math.max(Number(e.target.value) || 1, 1) };
+                    setKomponen(salinan);
+                  }}
+                  className="angka h-10 text-center"
+                />
+              </div>
+              <button
+                type="button"
+                aria-label="Lepaskan penyusun"
+                onClick={() => setKomponen(komponen.filter((x) => x.produk_id !== k.produk_id))}
+                className="grid size-10 shrink-0 place-items-center rounded-lg text-coklat-400 transition-colors hover:bg-boom-50 hover:text-boom-600"
+              >
+                <LuTrash2 className="size-4" />
+              </button>
+            </div>
+          ))}
+          <p className="text-xs text-coklat-400">Angka di kanan = jumlah untuk 1 porsi menu.</p>
+        </div>
+      )}
+
+      <div className="flex gap-2">
+        <Pilihan
+          nilai={pilih}
+          onUbah={setPilih}
+          placeholder={tersedia.length ? 'Pilih produk...' : 'Semua produk sudah dipakai'}
+          daftar={tersedia.map((p) => ({
+            nilai: p.id,
+            label: `${p.nama} (stok ${p.stok})`,
+          }))}
+          className="flex-1"
+        />
+        <Button type="button" variant="garis" onClick={tambah} disabled={!tersedia.length}>
+          <LuPlus /> Tambah
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+/* ---------------------------------------------------------------- */
+/* Form tambah / ubah                                                */
+/* ---------------------------------------------------------------- */
+function FormBarang({ jalur, label, barang, punyaStok, punyaPenyusun, terbuka, onTutup }) {
   const klien = useQueryClient();
   const sedangUbah = Boolean(barang);
 
@@ -23,13 +143,15 @@ function FormBarang({ jalur, label, barang, terbuka, onTutup }) {
     barang
       ? {
           nama: barang.nama,
-          // Harga disimpan sebagai angka biasa. Tampilan rupiahnya diurus
-          // oleh komponen InputRupiah, bukan oleh nilai yang disimpan di sini.
           harga: barang.harga,
           harga_diskon: barang.harga_diskon != null ? barang.harga_diskon : '',
           nama_diskon: barang.nama_diskon || '',
         }
       : KOSONG
+  );
+  const [dijualSatuan, setDijualSatuan] = useState(barang ? barang.dijual_satuan !== false : true);
+  const [komponen, setKomponen] = useState(
+    barang?.komponen?.map((k) => ({ produk_id: k.produk_id, jumlah: k.jumlah })) || []
   );
   const [sedangKirim, setSedangKirim] = useState(false);
 
@@ -39,7 +161,6 @@ function FormBarang({ jalur, label, barang, terbuka, onTutup }) {
 
   async function kirim(e) {
     e.preventDefault();
-
     if (isian.harga === '') return toast.error('Harga normal wajib diisi.');
 
     const data = {
@@ -47,6 +168,8 @@ function FormBarang({ jalur, label, barang, terbuka, onTutup }) {
       harga: Number(isian.harga),
       harga_diskon: adaDiskon ? Number(isian.harga_diskon) : null,
       nama_diskon: adaDiskon ? isian.nama_diskon.trim() : null,
+      ...(punyaStok ? { dijual_satuan: dijualSatuan } : {}),
+      ...(punyaPenyusun ? { komponen } : {}),
     };
 
     if (adaDiskon && !data.nama_diskon)
@@ -61,6 +184,7 @@ function FormBarang({ jalur, label, barang, terbuka, onTutup }) {
         { memuat: 'Menyimpan...', sukses: (d) => d.pesan }
       );
       klien.invalidateQueries({ queryKey: [jalur.replace('/', '')] });
+      klien.invalidateQueries({ queryKey: ['menu'] });
       onTutup();
     } catch {
       setSedangKirim(false);
@@ -72,11 +196,9 @@ function FormBarang({ jalur, label, barang, terbuka, onTutup }) {
       <DialogContent
         judul={sedangUbah ? `Ubah ${label}` : `Tambah ${label} Baru`}
         keterangan={
-          sedangUbah
-            ? 'Perubahan akan tercatat di log beserta nama Anda.'
-            : jalur === '/produk'
-              ? 'Stok tidak diisi di sini. Produk baru selalu mulai dari 0, lalu diisi di halaman Stok.'
-              : 'Menu tidak punya stok, jadi bisa langsung dijual setelah disimpan.'
+          punyaStok
+            ? 'Stok tidak diisi di sini. Produk baru selalu mulai dari 0, lalu diisi di halaman Stok.'
+            : 'Menu bisa berdiri sendiri, atau dibuat dari produk yang stoknya Anda catat.'
         }
       >
         <form onSubmit={kirim} className="space-y-4">
@@ -84,7 +206,7 @@ function FormBarang({ jalur, label, barang, terbuka, onTutup }) {
             <Input
               autoFocus
               placeholder={
-                jalur === '/produk' ? 'Contoh: Sambal Bawang 100g' : 'Contoh: Nasi Ayam Sambal'
+                punyaStok ? 'Contoh: Sambal Bawang 100g' : 'Contoh: Paket Mie + Air Mineral'
               }
               value={isian.nama}
               onChange={ubah('nama')}
@@ -106,7 +228,6 @@ function FormBarang({ jalur, label, barang, terbuka, onTutup }) {
             <p className="mb-3 mt-0.5 text-xs text-coklat-400">
               Boleh dikosongkan. Kalau diisi, harga inilah yang otomatis dipakai kasir.
             </p>
-
             <div className="space-y-3">
               <Kolom label="Harga setelah diskon">
                 <InputRupiah
@@ -115,7 +236,6 @@ function FormBarang({ jalur, label, barang, terbuka, onTutup }) {
                   onChange={ubahAngka('harga_diskon')}
                 />
               </Kolom>
-
               <Kolom
                 label="Nama diskon"
                 wajib={adaDiskon}
@@ -136,6 +256,17 @@ function FormBarang({ jalur, label, barang, terbuka, onTutup }) {
             </div>
           </div>
 
+          {punyaStok && (
+            <Saklar
+              nyala={dijualSatuan}
+              onUbah={setDijualSatuan}
+              judul="Dijual satuan di kasir"
+              keterangan="Kalau dimatikan, stoknya tetap dicatat tapi barangnya tidak muncul di layar kasir. Dipakai untuk bahan seperti mie instan yang hanya dijual di dalam menu."
+            />
+          )}
+
+          {punyaPenyusun && <PemilihPenyusun komponen={komponen} setKomponen={setKomponen} />}
+
           <DialogFooter>
             <Button type="button" variant="garis" onClick={onTutup} disabled={sedangKirim}>
               Batal
@@ -150,31 +281,14 @@ function FormBarang({ jalur, label, barang, terbuka, onTutup }) {
   );
 }
 
+/* ---------------------------------------------------------------- */
+/* Satu baris di daftar                                              */
+/* ---------------------------------------------------------------- */
 function BarisBarang({ barang, jalur, label, punyaStok, onUbah }) {
   const klien = useQueryClient();
-  const [sedangUnggah, setSedangUnggah] = useState(false);
   const diarsipkan = Boolean(barang.diarsipkan_pada);
-
-  async function unggahFoto(e) {
-    const berkas = e.target.files?.[0];
-    if (!berkas) return;
-    const data = new FormData();
-    data.append('foto', berkas);
-
-    setSedangUnggah(true);
-    try {
-      await denganToast(() => api.post(`${jalur}/${barang.id}/foto`, data), {
-        memuat: 'Mengunggah foto...',
-        sukses: 'Foto tersimpan.',
-      });
-      klien.invalidateQueries({ queryKey: [jalur.replace('/', '')] });
-    } catch {
-      // toast sudah muncul
-    } finally {
-      setSedangUnggah(false);
-      e.target.value = '';
-    }
-  }
+  const tidakSatuan = punyaStok && barang.dijual_satuan === false;
+  const Ikon = punyaStok ? LuPackage : LuUtensils;
 
   async function ubahArsip() {
     try {
@@ -187,7 +301,7 @@ function BarisBarang({ barang, jalur, label, punyaStok, onUbah }) {
       );
       klien.invalidateQueries({ queryKey: [jalur.replace('/', '')] });
     } catch {
-      // toast sudah muncul
+      /* pesannya sudah muncul lewat toast */
     }
   }
 
@@ -198,31 +312,24 @@ function BarisBarang({ barang, jalur, label, punyaStok, onUbah }) {
         diarsipkan && 'opacity-60'
       )}
     >
-      {/* Foto */}
-      <label
+      <span
         className={cn(
-          'group relative size-20 shrink-0 cursor-pointer overflow-hidden rounded-xl bg-coklat-50',
-          sedangUnggah && 'pointer-events-none animate-pulse'
+          'grid size-11 shrink-0 place-items-center rounded-xl',
+          punyaStok ? 'bg-boom-50 text-boom-600' : 'bg-daun-50 text-daun-700'
         )}
       >
-        {barang.foto_url ? (
-          <img src={barang.foto_url} alt={barang.nama} className="size-full object-cover" />
-        ) : (
-          <span className="grid size-full place-items-center text-coklat-200">
-            <LuImagePlus className="size-6" />
-          </span>
-        )}
-        <span className="absolute inset-0 hidden place-items-center bg-coklat-900/50 text-white group-hover:grid">
-          <LuImagePlus className="size-5" />
-        </span>
-        <input type="file" accept="image/*" className="sr-only" onChange={unggahFoto} />
-      </label>
+        <Ikon className="size-5" />
+      </span>
 
-      {/* Keterangan */}
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
           <p className="font-bold text-coklat-900">{barang.nama}</p>
           {diarsipkan && <Label warna="netral">Diarsipkan</Label>}
+          {tidakSatuan && (
+            <Label warna="kuning">
+              <LuEyeOff className="size-3" /> Tidak dijual satuan
+            </Label>
+          )}
         </div>
 
         <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -246,8 +353,42 @@ function BarisBarang({ barang, jalur, label, punyaStok, onUbah }) {
               barang.stok <= 0 ? 'text-boom-600' : 'text-coklat-400'
             )}
           >
-            Stok: {barang.stok}
+            Stok: {angka(barang.stok)}
           </p>
+        )}
+
+        {!punyaStok && barang.komponen?.length > 0 && (
+          <div className="mt-1.5 rounded-lg bg-coklat-50 px-2.5 py-1.5">
+            <p className="text-xs font-bold text-coklat-900">
+              Dibuat dari stok
+              {barang.sisa_porsi != null && (
+                <span
+                  className={cn(
+                    'angka ml-1.5 font-extrabold',
+                    barang.sisa_porsi <= 0
+                      ? 'text-boom-600'
+                      : barang.sisa_porsi <= 5
+                        ? 'text-terakota-500'
+                        : 'text-daun-700'
+                  )}
+                >
+                  &middot; sisa {barang.sisa_porsi} porsi
+                </span>
+              )}
+            </p>
+            <p className="angka mt-0.5 text-xs text-coklat-600">
+              {barang.komponen.map((k) => `${k.jumlah}x ${k.nama_produk}`).join(' + ')}
+            </p>
+            {barang.pembatas_porsi && barang.sisa_porsi <= 5 && (
+              <p className="mt-0.5 text-xs font-semibold text-boom-600">
+                Dibatasi oleh {barang.pembatas_porsi}
+              </p>
+            )}
+          </div>
+        )}
+
+        {!punyaStok && !barang.komponen?.length && (
+          <p className="mt-1 text-sm text-coklat-400">Tidak dibatasi stok</p>
         )}
 
         <div className="mt-2 flex flex-wrap gap-1.5">
@@ -271,12 +412,13 @@ function BarisBarang({ barang, jalur, label, punyaStok, onUbah }) {
   );
 }
 
-/**
- * Halaman katalog yang dipakai bersama oleh Produk dan Menu.
- * Keduanya hampir sama persis, bedanya cuma Produk menampilkan stok.
- */
+/* ---------------------------------------------------------------- */
+/* Halaman                                                           */
+/* ---------------------------------------------------------------- */
 export default function HalamanKatalog({ jalur, label, labelJamak, keterangan, punyaStok }) {
   const kunci = jalur.replace('/', '');
+  const punyaPenyusun = !punyaStok;
+
   const [cari, setCari] = useState('');
   const [termasukArsip, setTermasukArsip] = useState(false);
   const [formTerbuka, setFormTerbuka] = useState(false);
@@ -290,6 +432,7 @@ export default function HalamanKatalog({ jalur, label, labelJamak, keterangan, p
   const hasil = (daftar.data || []).filter((b) =>
     b.nama.toLowerCase().includes(cari.trim().toLowerCase())
   );
+  const tidakSatuan = (daftar.data || []).filter((b) => b.dijual_satuan === false).length;
 
   function bukaTambah() {
     setYangDiubah(null);
@@ -346,6 +489,21 @@ export default function HalamanKatalog({ jalur, label, labelJamak, keterangan, p
         <Pemberitahuan warna="netral" className="mb-4" ikon={LuTriangleAlert}>
           Menambah produk di sini <strong>tidak</strong> mengisi stok. Stok diisi terpisah di
           halaman Stok, supaya setiap perubahannya tercatat rapi.
+          {tidakSatuan > 0 && (
+            <>
+              {' '}
+              Saat ini ada <strong>{tidakSatuan} produk</strong> yang tidak dijual satuan — stoknya
+              dicatat, tapi hanya dipakai sebagai penyusun menu.
+            </>
+          )}
+        </Pemberitahuan>
+      )}
+
+      {punyaPenyusun && (
+        <Pemberitahuan warna="netral" className="mb-4" ikon={LuInfo}>
+          Menu boleh dibuat dari produk yang stoknya Anda catat. Saat menu terjual, stok
+          penyusunnya ikut berkurang. Menu tanpa penyusun tetap boleh ada dan tidak menyentuh stok
+          sama sekali.
         </Pemberitahuan>
       )}
 
@@ -400,6 +558,8 @@ export default function HalamanKatalog({ jalur, label, labelJamak, keterangan, p
           jalur={jalur}
           label={label}
           barang={yangDiubah}
+          punyaStok={punyaStok}
+          punyaPenyusun={punyaPenyusun}
           terbuka={formTerbuka}
           onTutup={() => setFormTerbuka(false)}
         />

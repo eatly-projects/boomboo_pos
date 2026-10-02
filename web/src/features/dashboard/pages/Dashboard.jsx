@@ -5,8 +5,9 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 import {
-  LuQrCode, LuBanknote, LuWallet, LuReceipt, LuTriangleAlert, LuSend,
-  LuTrendingUp, LuPackage, LuTicketPercent, LuCalendarRange,
+  LuQrCode, LuWallet, LuReceipt, LuTriangleAlert, LuSend, LuRepeat,
+  LuTrendingUp, LuPackage, LuTicketPercent, LuCalendarRange, LuNotebookPen,
+  LuPackageMinus, LuUser,
 } from 'react-icons/lu';
 import { ambil } from '@/shared/lib/api';
 import {
@@ -69,8 +70,7 @@ export default function Dashboard() {
 
   const grafik = (d?.harian || []).map((h) => ({
     tanggal: tanggalPendek(h.tanggal),
-    QRIS: h.qris,
-    Tunai: h.tunai,
+    'Uang masuk': h.total,
     total: h.total,
     jumlah: h.jumlah_transaksi,
   }));
@@ -166,17 +166,17 @@ export default function Dashboard() {
             warna="hijau"
           />
           <KotakAngka
-            judul="Uang masuk lewat QRIS"
-            nilai={rupiah(r.uang_qris)}
-            keterangan={`${angka(r.jumlah_qris)} transaksi`}
+            judul="Semua lewat QRIS"
+            nilai={angka(r.jumlah_transaksi)}
+            keterangan="Tidak ada lagi pembayaran tunai"
             ikon={LuQrCode}
             warna="merah"
           />
           <KotakAngka
-            judul="Uang masuk tunai"
-            nilai={rupiah(r.uang_tunai)}
-            keterangan={`${angka(r.jumlah_tunai)} transaksi`}
-            ikon={LuBanknote}
+            judul="Berasal dari Open Bill"
+            nilai={angka(r.jumlah_dari_bill)}
+            keterangan="Pesan dulu, bayar belakangan"
+            ikon={LuNotebookPen}
             warna="kuning"
           />
           <KotakAngka
@@ -220,11 +220,123 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* Barang keluar bukan karena dijual, dan uang yang dikembalikan */}
+      {!data.isLoading && d && (
+        <div className="mt-5 grid gap-4 lg:grid-cols-2">
+          <div className="rounded-2xl border-2 border-netral-200 bg-white p-4 sm:p-5">
+            <p className="flex items-center gap-2 font-bold text-coklat-900">
+              <LuPackageMinus className="size-4.5 text-terakota-500" />
+              Barang keluar bukan karena dijual
+            </p>
+            <p className="mb-3 mt-0.5 text-sm text-coklat-400">
+              Dinilai memakai harga jual yang berlaku sekarang, jadi angkanya adalah pendapatan
+              yang hilang, bukan kerugian modal.
+            </p>
+
+            {(d.stok_keluar?.per_alasan || []).length === 0 ? (
+              <p className="py-6 text-center text-sm text-coklat-400">
+                Belum ada barang yang dikeluarkan di luar penjualan.
+              </p>
+            ) : (
+              <>
+                <div className="mb-3 grid grid-cols-2 gap-2">
+                  <div className="rounded-xl bg-biji-50 p-3">
+                    <p className="text-xs text-coklat-600">Sengaja dikeluarkan</p>
+                    <p className="angka text-lg font-extrabold text-coklat-900">
+                      {rupiah(d.stok_keluar.nilai_sengaja_dikeluarkan)}
+                    </p>
+                    <p className="text-xs text-coklat-400">Sample, karyawan, hadiah</p>
+                  </div>
+                  <div className="rounded-xl bg-boom-50 p-3">
+                    <p className="text-xs text-coklat-600">Rusak atau hilang</p>
+                    <p className="angka text-lg font-extrabold text-coklat-900">
+                      {rupiah(d.stok_keluar.nilai_kerusakan)}
+                    </p>
+                    <p className="text-xs text-coklat-400">Rusak, tumpah, hilang</p>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  {d.stok_keluar.per_alasan.map((a) => (
+                    <div key={a.alasan} className="flex items-center justify-between py-1.5">
+                      <span className="text-sm capitalize text-coklat-900">{a.alasan}</span>
+                      <span className="angka text-sm text-coklat-600">
+                        {angka(a.jumlah_barang)} barang
+                        <span className="ml-1.5 font-bold text-coklat-900">{rupiah(a.nilai)}</span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="rounded-2xl border-2 border-netral-200 bg-white p-4 sm:p-5">
+            <p className="flex items-center gap-2 font-bold text-coklat-900">
+              <LuRepeat className="size-4.5 text-terakota-500" />
+              Penukaran dan uang yang dikembalikan
+            </p>
+            <p className="mb-3 mt-0.5 text-sm text-coklat-400">
+              Uang yang ditalangi kasir perlu diganti ke orangnya.
+            </p>
+
+            <div className="mb-3 grid grid-cols-2 gap-2">
+              <div className="rounded-xl bg-coklat-50 p-3">
+                <p className="text-xs text-coklat-600">Transaksi ditukar</p>
+                <p className="angka text-lg font-extrabold text-coklat-900">
+                  {angka(r.jumlah_ditukar)}
+                </p>
+              </div>
+              <div className="rounded-xl bg-coklat-50 p-3">
+                <p className="text-xs text-coklat-600">Uang dikembalikan</p>
+                <p className="angka text-lg font-extrabold text-coklat-900">
+                  {rupiah(d.pengembalian_uang?.total ?? 0)}
+                </p>
+              </div>
+            </div>
+
+            {d.pengembalian_uang?.belum_diganti > 0 && (
+              <Pemberitahuan
+                warna="kuning"
+                className="mb-3"
+                ikon={LuUser}
+                judul="Ada talangan kasir yang belum diganti"
+              >
+                Totalnya{' '}
+                <span className="angka font-bold">{rupiah(d.pengembalian_uang.belum_diganti)}</span>
+              </Pemberitahuan>
+            )}
+
+            {(d.pengembalian_uang?.per_kasir || []).length === 0 ? (
+              <p className="py-4 text-center text-sm text-coklat-400">
+                Belum ada uang yang ditalangi kasir.
+              </p>
+            ) : (
+              <div className="space-y-1">
+                {d.pengembalian_uang.per_kasir.map((k) => (
+                  <div key={k.nama_user} className="flex items-center justify-between py-1.5">
+                    <span className="text-sm font-semibold text-coklat-900">{k.nama_user}</span>
+                    <span className="angka text-sm text-coklat-600">
+                      {rupiah(k.total)}
+                      {k.belum_diganti > 0 && (
+                        <span className="ml-1.5 font-bold text-boom-600">
+                          belum diganti {rupiah(k.belum_diganti)}
+                        </span>
+                      )}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Grafik perbandingan harian */}
       <div className="mt-5 rounded-2xl border-2 border-netral-200 bg-white p-4 sm:p-5">
         <p className="font-bold text-coklat-900">Penjualan hari per hari</p>
         <p className="mb-4 text-sm text-coklat-400">
-          Batang merah untuk QRIS, batang kuning untuk tunai.
+          Semua pembayaran lewat QRIS, jadi tidak ada lagi pemisahan tunai.
         </p>
 
         {data.isLoading ? (
@@ -254,8 +366,7 @@ export default function Dashboard() {
                 />
                 <Tooltip content={<PetunjukGrafik />} cursor={{ fill: '#f5f5f4' }} />
                 <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} />
-                <Bar dataKey="QRIS" stackId="a" fill="#e43222" radius={[0, 0, 0, 0]} />
-                <Bar dataKey="Tunai" stackId="a" fill="#f3db9f" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="Uang masuk" fill="#e43222" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

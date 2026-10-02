@@ -16,7 +16,7 @@ export async function ringkasan({ cari, hanya_bermasalah } = {}) {
   }
 
   const { rows } = await kueri(
-    `select p.id, p.nama, p.stok, p.foto_url,
+    `select p.id, p.nama, p.stok, p.dijual_satuan,
             coalesce(sum(g.jumlah), 0)::int as stok_menurut_buku,
             (p.stok - coalesce(sum(g.jumlah), 0))::int as selisih,
             max(g.dibuat_pada) as pergerakan_terakhir

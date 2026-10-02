@@ -9,6 +9,7 @@
     "start": "node src/server.js",
     "migrate": "node migrations/jalankan.js",
     "seed": "node seed/isi-data-contoh.js",
+    "seed:bill": "node seed/isi-bill.js",
     "seed:bersihkan": "node seed/bersihkan.js",
     "siapkan:bucket": "node seed/siapkan-bucket.js",
     "uji": "node uji/alur-kasir.mjs",

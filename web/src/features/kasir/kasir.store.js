@@ -47,13 +47,17 @@ export const useKeranjang = create((set, get) => ({
     const item = [...get().item];
     const adaDi = item.findIndex((i) => i.kunci === kunci);
 
+    // Produk dibatasi stoknya sendiri, menu dibatasi penyusun paling sedikit.
+    // Menu tanpa penyusun tidak dibatasi sama sekali.
+    const batas = jenis === 'produk' ? barang.stok : barang.sisa_porsi;
+    const adaBatas = batas !== null && batas !== undefined;
+
     if (adaDi >= 0) {
       const sekarang = item[adaDi];
-      // Produk dijaga tidak melebihi stok yang tersedia.
-      if (jenis === 'produk' && sekarang.jumlah + 1 > barang.stok) return false;
+      if (adaBatas && sekarang.jumlah + 1 > batas) return false;
       item[adaDi] = { ...sekarang, jumlah: sekarang.jumlah + 1 };
     } else {
-      if (jenis === 'produk' && barang.stok < 1) return false;
+      if (adaBatas && batas < 1) return false;
       item.push({
         kunci,
         jenis_barang: jenis,
@@ -63,8 +67,7 @@ export const useKeranjang = create((set, get) => ({
         harga_diskon: barang.harga_diskon,
         nama_diskon: barang.nama_diskon,
         harga_dipakai: barang.harga_diskon ?? barang.harga,
-        foto_url: barang.foto_url,
-        stok: jenis === 'produk' ? barang.stok : null,
+        batas: adaBatas ? batas : null,
         jumlah: 1,
       });
     }
@@ -77,8 +80,7 @@ export const useKeranjang = create((set, get) => ({
     set({
       item: get().item.map((i) => {
         if (i.kunci !== kunci) return i;
-        const batas = i.jenis_barang === 'produk' ? Math.min(jumlah, i.stok) : jumlah;
-        return { ...i, jumlah: batas };
+        return { ...i, jumlah: i.batas != null ? Math.min(jumlah, i.batas) : jumlah };
       }),
     });
   },

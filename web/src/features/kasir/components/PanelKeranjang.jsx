@@ -8,7 +8,7 @@ import { Kosong } from '@/shared/components/ui/tampilan';
 import { cn } from '@/shared/lib/utils';
 
 function BarisItem({ item, setJumlah, hapus }) {
-  const mentok = item.jenis_barang === 'produk' && item.jumlah >= item.stok;
+  const mentok = item.batas != null && item.jumlah >= item.batas;
 
   return (
     <div className="flex gap-3 py-3">

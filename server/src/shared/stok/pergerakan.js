@@ -21,7 +21,7 @@ import { KesalahanAplikasi, tidakDitemukan } from '../middleware/error.js';
  */
 export async function gerakkanStok(
   klien,
-  { produkId, jenis, jumlah, alasan = null, catatan = null, transaksiId = null, user, bolehMinus = false }
+  { produkId, jenis, jumlah, alasan = null, catatan = null, transaksiId = null, billId = null, user, bolehMinus = false }
 ) {
   if (!Number.isInteger(jumlah) || jumlah === 0)
     throw new KesalahanAplikasi('Jumlah stok harus angka bulat dan tidak boleh nol.', 400);
@@ -49,8 +49,8 @@ export async function gerakkanStok(
   await klien.query(
     `insert into pergerakan_stok
        (produk_id, jenis, jumlah, stok_sebelum, stok_sesudah,
-        alasan, catatan, transaksi_id, user_id, nama_user)
-     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+        alasan, catatan, transaksi_id, bill_id, user_id, nama_user)
+     values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
     [
       produkId,
       jenis,
@@ -60,6 +60,7 @@ export async function gerakkanStok(
       alasan,
       catatan,
       transaksiId,
+      billId,
       user?.id ?? null,
       user?.nama ?? 'Sistem',
     ]
@@ -74,4 +75,18 @@ export async function gerakkanStok(
   };
 }
 
-export const ALASAN_PENGURANGAN = ['rusak', 'tumpah', 'hilang', 'koreksi hitungan'];
+// Alasan stok keluar di luar penjualan (keputusan K35). Tiga yang terakhir
+// ditambahkan karena di lapangan barang memang sering keluar bukan karena
+// dibeli orang.
+export const ALASAN_PENGURANGAN = [
+  'rusak',
+  'tumpah',
+  'hilang',
+  'sample promosi',
+  'konsumsi karyawan',
+  'hadiah / giveaway',
+  'koreksi hitungan',
+];
+
+/** Alasan yang BUKAN kerusakan, dipakai memisahkan laporan. */
+export const ALASAN_BUKAN_RUSAK = ['sample promosi', 'konsumsi karyawan', 'hadiah / giveaway'];
