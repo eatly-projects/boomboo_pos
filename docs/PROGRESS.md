@@ -137,7 +137,54 @@ sudah dibuka dan tampil benar dengan data sungguhan.
 
 ---
 
-## Data contoh yang sekarang ada di basis data
+## Basis data: pindah ke Supabase milik user (2 Oktober 2026)
+
+Aplikasi kasir sekarang memakai **basis data yang sama dengan aplikasi Boomboo
+yang lain**, tetapi di **skema terpisah** bernama `pos`.
+
+| Hal | Isinya |
+|---|---|
+| Alamat | Pooler Supabase `aws-1-ap-southeast-1.pooler.supabase.com`. Alamat langsung `db.<ref>.supabase.co` **tidak bisa dipakai** dari jaringan ini |
+| Porta | 6543 (pooler transaksi) untuk aplikasi, 5432 (pooler sesi) juga jalan |
+| Skema | `pos` - 17 tabel, terpisah dari 49 tabel milik aplikasi lain di `public` |
+| Pengunci | Jalur pencarian tabel dipaksa ke `pos, extensions` di `src/shared/db/pool.js`. **Skema `public` sengaja tidak ikut** |
+
+Artinya: kalau ada nama tabel yang salah ketik, aplikasi langsung galat, bukan
+diam-diam membaca atau menimpa tabel milik aplikasi sebelah. Sudah dibuktikan
+lewat `npm run uji:pindah` - 35 pemeriksaan, semuanya lulus, termasuk
+memastikan tabel `ingredients`, `purchase_orders`, `products`, dan `profiles`
+benar-benar tidak terlihat dari aplikasi kasir.
+
+### Pengaturan yang perlu dipasang di Vercel
+
+| Nama | Isi |
+|---|---|
+| `DATABASE_URL` | Alamat pooler porta 6543 milik user |
+| `DB_SCHEMA` | `pos` |
+
+### Isi basis data sekarang
+
+| | Jumlah |
+|---|---|
+| Akun pengguna | 6, seluruhnya memakai kata sandi yang baru |
+| Produk | 11, diambil dari `docs/Price List CBE.xlsx` bagian PRODUCT |
+| Stok | 0 untuk semua produk |
+| Menu | 0 - bagian MAKANAN di berkas itu belum dimasukkan |
+| Transaksi, bill, log | kosong |
+
+### Perintah yang tersedia
+
+| Perintah | Gunanya |
+|---|---|
+| `npm run migrate` | Membuat seluruh tabel di skema `pos` |
+| `npm run seed:user -- "<sandi>"` | Membuat 6 akun, semuanya memakai kata sandi itu |
+| `npm run seed:produk` | Mengisi 11 produk dari daftar harga |
+| `npm run seed:bersihkan -- --simpan-user` | Mengosongkan data tapi akun tetap ada |
+| `npm run uji:pindah` | Memastikan sekat antar aplikasi masih rapat |
+
+---
+
+## Data contoh (tidak lagi dipakai di basis data user)
 
 Tersebar di 7 hari, 26 September – 2 Oktober 2026.
 

@@ -39,3 +39,8 @@ coverage/
 # Logo dan ikonnya sudah diekstrak ke brand-assets/ dan web/public/merek/
 BO_BrandBook_2024.pdf
 *.pdf
+
+# Daftar harga dari user - berisi gambar produk, 4,7 MB. Isinya yang terpakai
+# sudah disalin ke server/seed/isi-produk-asli.js
+docs/Price List CBE.xlsx
+*.xlsx
