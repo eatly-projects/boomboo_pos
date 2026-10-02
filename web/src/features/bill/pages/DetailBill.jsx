@@ -3,15 +3,15 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import {
-  LuArrowLeft, LuPlus, LuTrash2, LuSearch, LuX, LuNotebookPen, LuClock,
-  LuTriangleAlert, LuCircleCheck, LuBan, LuTicketPercent,
+  LuArrowLeft, LuPlus, LuMinus, LuTrash2, LuSearch, LuX, LuNotebookPen, LuClock,
+  LuTriangleAlert, LuCircleCheck, LuBan, LuTicketPercent, LuLock,
 } from 'react-icons/lu';
 import { ambil, api, denganToast } from '@/shared/lib/api';
 import { rupiah, tanggalJam, lamanya, nomorWaTampil } from '@/shared/lib/format';
 import { Button } from '@/shared/components/ui/button';
 import { Input, InputRupiah, Kolom, Textarea } from '@/shared/components/ui/input';
 import { Dialog, DialogContent, DialogFooter } from '@/shared/components/ui/dialog';
-import { Rangka, Label, Pemberitahuan, Kosong } from '@/shared/components/ui/tampilan';
+import { Rangka, Label, Pemberitahuan, Kosong, Saklar } from '@/shared/components/ui/tampilan';
 import KartuBarang from '@/features/kasir/components/KartuBarang.jsx';
 import { cn } from '@/shared/lib/utils';
 
@@ -29,6 +29,9 @@ export default function DetailBill() {
   const [cari, setCari] = useState('');
   const [saringan, setSaringan] = useState('semua');
   const [sedangKirim, setSedangKirim] = useState(false);
+  // Sengaja mati di awal. Bill sering dibuka cuma untuk dilihat atau ditutup,
+  // dan sekali barang masuk bill stoknya langsung berkurang beneran.
+  const [bolehTambah, setBolehTambah] = useState(false);
   const [dialogTutup, setDialogTutup] = useState(false);
   const [dialogBatal, setDialogBatal] = useState(false);
 
@@ -66,6 +69,25 @@ export default function DetailBill() {
             jumlah: 1,
           }),
         { memuat: 'Menambahkan...', sukses: (d) => d.pesan }
+      );
+      segarkan();
+    } catch {
+      /* pesannya sudah muncul */
+    } finally {
+      setSedangKirim(false);
+    }
+  }
+
+  async function ubahJumlah(item, jumlahBaru) {
+    if (jumlahBaru < 1) return;
+    setSedangKirim(true);
+    try {
+      await denganToast(
+        () => api.patch(`/bill/${id}/item/${item.id}`, { jumlah: jumlahBaru }),
+        {
+          memuat: jumlahBaru > item.jumlah ? 'Menambah...' : 'Mengurangi...',
+          sukses: (d) => d.pesan,
+        }
       );
       segarkan();
     } catch {
@@ -177,6 +199,25 @@ export default function DetailBill() {
 
         {terbuka && (
           <>
+            <Saklar
+              className="mb-4"
+              nyala={bolehTambah}
+              onUbah={setBolehTambah}
+              judul={bolehTambah ? 'Boleh menambah barang' : 'Nyalakan dulu untuk menambah barang'}
+              keterangan={
+                bolehTambah
+                  ? 'Daftar barang di bawah sudah bisa dipencet. Matikan lagi kalau sudah selesai mencatat pesanan.'
+                  : 'Selama mati, daftar barang disembunyikan supaya tidak ada yang masuk bill tanpa sengaja.'
+              }
+            />
+
+            {!bolehTambah ? (
+              <Pemberitahuan warna="netral" ikon={LuLock} judul="Daftar barang sedang dikunci">
+                Isi bill di sebelah kanan tetap bisa diubah jumlahnya kapan saja. Untuk menambah
+                barang yang belum ada di bill, nyalakan dulu saklar di atas.
+              </Pemberitahuan>
+            ) : (
+            <>
             <Pemberitahuan warna="netral" className="mb-4" ikon={LuClock}>
               Setiap barang yang ditambahkan di sini <strong>langsung mengurangi stok</strong>,
               karena barangnya memang sudah diserahkan ke pembeli. Kalau pembeli batal, cabut
@@ -234,6 +275,8 @@ export default function DetailBill() {
                 />
               ))}
             </div>
+            </>
+            )}
           </>
         )}
       </div>
@@ -282,6 +325,32 @@ export default function DetailBill() {
                         <p className="mt-0.5 text-xs text-coklat-400">
                           dicatat {i.nama_penambah} &middot; {tanggalJam(i.dibuat_pada)}
                         </p>
+
+                        {terbuka && (
+                          <div className="mt-2 flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              aria-label={`Kurangi ${i.nama_barang}`}
+                              onClick={() => ubahJumlah(i, i.jumlah - 1)}
+                              disabled={sedangKirim || i.jumlah <= 1}
+                              className="grid size-8 place-items-center rounded-lg border-2 border-netral-200 text-coklat-600 transition-colors hover:border-boom-500 hover:text-boom-600 disabled:opacity-40 disabled:hover:border-netral-200 disabled:hover:text-coklat-600"
+                            >
+                              <LuMinus className="size-3.5" />
+                            </button>
+                            <span className="angka w-8 text-center text-sm font-extrabold text-coklat-900">
+                              {i.jumlah}
+                            </span>
+                            <button
+                              type="button"
+                              aria-label={`Tambah ${i.nama_barang}`}
+                              onClick={() => ubahJumlah(i, i.jumlah + 1)}
+                              disabled={sedangKirim}
+                              className="grid size-8 place-items-center rounded-lg border-2 border-netral-200 text-coklat-600 transition-colors hover:border-daun-500 hover:text-daun-700 disabled:opacity-40"
+                            >
+                              <LuPlus className="size-3.5" />
+                            </button>
+                          </div>
+                        )}
                       </div>
 
                       <div className="shrink-0 text-right">

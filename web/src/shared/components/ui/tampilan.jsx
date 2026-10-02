@@ -146,3 +146,40 @@ export function Pemberitahuan({ warna = 'kuning', ikon: Ikon, judul, children, c
     </div>
   );
 }
+
+/**
+ * Saklar nyala-mati. Dipakai untuk pilihan yang punya akibat nyata,
+ * misalnya "produk ini dijual satuan" atau "boleh menambah barang ke bill".
+ * Judul dan keterangannya wajib diisi supaya orang tahu akibatnya sebelum
+ * menekan, bukan sesudah.
+ */
+export function Saklar({ nyala, onUbah, judul, keterangan, className }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={nyala}
+      onClick={() => onUbah(!nyala)}
+      className={cn(
+        'flex w-full items-start gap-3 rounded-xl border-2 p-3.5 text-left transition-colors',
+        nyala ? 'border-daun-500 bg-daun-50' : 'border-netral-200 bg-white hover:border-coklat-200',
+        className
+      )}
+    >
+      <span
+        className={cn(
+          'mt-0.5 flex h-6 w-11 shrink-0 items-center rounded-full p-0.5 transition-colors',
+          nyala ? 'bg-daun-500' : 'bg-netral-300'
+        )}
+      >
+        <span
+          className={cn('size-5 rounded-full bg-white transition-transform', nyala && 'translate-x-5')}
+        />
+      </span>
+      <span className="min-w-0">
+        <span className="block text-sm font-bold text-coklat-900">{judul}</span>
+        <span className="mt-0.5 block text-xs text-coklat-400">{keterangan}</span>
+      </span>
+    </button>
+  );
+}

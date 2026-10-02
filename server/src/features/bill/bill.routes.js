@@ -20,6 +20,10 @@ const skemaItem = z.object({
   jumlah: z.number().int().positive('Jumlah minimal 1.'),
 });
 
+const skemaUbahItem = z.object({
+  jumlah: z.number().int().min(1, 'Jumlah minimal 1. Pakai tombol hapus untuk mencabut barangnya.'),
+});
+
 const skemaTutup = z.object({
   diskon_jenis: z.enum(['persen', 'nominal']).nullish(),
   diskon_nilai: z.number().int().min(0).nullish(),
@@ -69,6 +73,24 @@ router.post(
     res.status(201).json({
       sukses: true,
       pesan: `${data.jumlah} ${data.nama_barang} ditambahkan. Stok langsung berkurang.`,
+      data,
+    });
+  })
+);
+
+router.patch(
+  '/:id/item/:itemId',
+  periksa(skemaUbahItem),
+  tangkap(async (req, res) => {
+    const data = await service.ubahJumlahItem(
+      req.params.id,
+      req.params.itemId,
+      req.body,
+      req.user
+    );
+    res.json({
+      sukses: true,
+      pesan: `${data.nama_barang} jadi ${data.jumlah}. Stok sudah disesuaikan.`,
       data,
     });
   })

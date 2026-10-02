@@ -154,6 +154,7 @@ export const labelAksi = (a) =>
     tukar_barang: 'Menukar barang',
     buka_bill: 'Membuka bill',
     tambah_barang_bill: 'Menambah barang ke bill',
+    ubah_jumlah_barang_bill: 'Mengubah jumlah barang di bill',
     hapus_barang_bill: 'Mencabut barang dari bill',
     tutup_bill: 'Menutup bill',
     batal_bill: 'Membatalkan bill',

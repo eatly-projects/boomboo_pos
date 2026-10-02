@@ -252,6 +252,89 @@ export async function tambahItem(id, { jenis_barang, barang_id, jumlah }, user) 
   });
 }
 
+/**
+ * Mengubah jumlah satu baris yang sudah ada di bill, selama bill masih terbuka.
+ *
+ * Pembeli sering berubah pikiran sebelum bayar: tambah satu, kurangi satu,
+ * atau tukar dengan barang lain. Stok harus ikut bergerak saat itu juga,
+ * karena barangnya memang sudah berpindah tangan walaupun belum dibayar.
+ *
+ * Harganya TIDAK dihitung ulang. Harga dibekukan saat barang pertama kali
+ * masuk bill, jadi kalau harga produknya diubah di tengah event, tagihan
+ * yang sudah berjalan tidak ikut berubah.
+ */
+export async function ubahJumlahItem(id, itemId, { jumlah }, user) {
+  return dalamTransaksi(async (klien) => {
+    const { rows } = await klien.query('select * from bill where id = $1 for update', [id]);
+    const bill = rows[0];
+    if (!bill) throw tidakDitemukan('Bill tidak ditemukan.');
+    if (bill.status !== 'terbuka')
+      throw new KesalahanAplikasi('Bill ini sudah ditutup, isinya tidak bisa diubah lagi.', 409);
+
+    const { rows: baris } = await klien.query(
+      'select * from bill_item where id = $1 and bill_id = $2 for update',
+      [itemId, id]
+    );
+    const item = baris[0];
+    if (!item) throw tidakDitemukan('Barang itu tidak ada di bill ini.');
+
+    const selisih = jumlah - item.jumlah;
+
+    if (selisih > 0) {
+      // Nambah: periksa dulu stoknya cukup atau tidak, baru dipotong
+      const tambahan = [{ ...item, jumlah: selisih }];
+      await periksaKetersediaan(klien, tambahan);
+      await gerakkanStokKeranjang(klien, {
+        item: tambahan,
+        jenis: 'bill_keluar',
+        arah: -1,
+        billId: id,
+        catatan: `Ditambah di ${bill.nomor}, jadi ${jumlah}`,
+        user,
+      });
+    } else if (selisih < 0) {
+      // Berkurang: stok kembali lewat baris pergerakan baru, bukan dihapus
+      await gerakkanStokKeranjang(klien, {
+        item: [{ ...item, jumlah: -selisih }],
+        jenis: 'bill_kembali',
+        arah: 1,
+        billId: id,
+        catatan: `Dikurangi di ${bill.nomor}, jadi ${jumlah}`,
+        user,
+      });
+    }
+
+    const { rows: disimpan } = await klien.query(
+      `update bill_item
+          set jumlah = $1, subtotal = harga_dipakai * $1
+        where id = $2
+        returning *`,
+      [jumlah, itemId]
+    );
+
+    if (selisih !== 0) {
+      await catatLog(
+        {
+          user,
+          aksi: 'ubah_jumlah_barang_bill',
+          entitas: 'bill',
+          entitasId: id,
+          namaEntitas: bill.nomor,
+          detail: {
+            barang: item.nama_barang,
+            jumlah_sebelum: item.jumlah,
+            jumlah_sesudah: jumlah,
+            selisih,
+          },
+        },
+        klien
+      );
+    }
+
+    return disimpan[0];
+  });
+}
+
 export async function hapusItem(id, itemId, user) {
   return dalamTransaksi(async (klien) => {
     const { rows } = await klien.query('select * from bill where id = $1 for update', [id]);

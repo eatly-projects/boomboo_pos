@@ -211,6 +211,7 @@ bagian('6. ALASAN STOK KELUAR DI LUAR PENJUALAN (R5)');
 bagian('7. OPEN BILL (R3)');
 
 let billSelesai;
+let billTertutupId;
 {
   const buka = await kirim('/bill', {
     nama_pembeli: 'Uji Open Bill',
@@ -218,6 +219,7 @@ let billSelesai;
     penanda: 'Meja uji',
   });
   const bill = buka.data;
+  billTertutupId = bill.id;
   cek('Bill dibuka', buka.status === 201, bill.nomor);
   cek('Nomor WhatsApp dibakukan', bill.nomor_wa === '6281298765432');
 
@@ -247,6 +249,42 @@ let billSelesai;
     setelahCabut === -3,
     `2 yang dicabut kembali, sisa gerakan ${setelahCabut}`
   );
+
+  /* --- jumlah barang bisa diubah selama bill masih terbuka --- */
+  const ubah = (itemId, jumlah) =>
+    panggil(`/bill/${bill.id}/item/${itemId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ jumlah }),
+    });
+
+  const barisPertama = (await panggil(`/bill/${bill.id}`)).data.item[0];
+
+  const naik = await ubah(barisPertama.id, 5);
+  cek('Jumlah barang di bill bisa dinaikkan', naik.status === 200, naik.pesan);
+  cek('Stok ikut berkurang saat jumlahnya dinaikkan',
+    (await gerakanDari(produkJual.id, (g) => g.bill_id === bill.id)) === -5);
+
+  const turun = await ubah(barisPertama.id, 2);
+  cek('Jumlah barang di bill bisa diturunkan', turun.status === 200);
+  cek('Stok kembali saat jumlahnya diturunkan',
+    (await gerakanDari(produkJual.id, (g) => g.bill_id === bill.id)) === -2);
+
+  const isiSekarang = (await panggil(`/bill/${bill.id}`)).data;
+  const barisBaru = isiSekarang.item.find((x) => x.id === barisPertama.id);
+  cek('Subtotalnya ikut dihitung ulang',
+    barisBaru.subtotal === barisBaru.harga_dipakai * 2, rp(barisBaru.subtotal));
+  cek('Harganya tetap beku, tidak dihitung ulang dengan harga hari ini',
+    barisBaru.harga_dipakai === barisPertama.harga_dipakai);
+
+  cek('Jumlah 0 ditolak, harus pakai tombol hapus',
+    (await ubah(barisPertama.id, 0)).status === 400);
+  const kebanyakan = await ubah(barisPertama.id, 99999);
+  cek('Menaikkan melebihi stok ditolak', kebanyakan.status === 400, kebanyakan.pesan);
+  cek('Jumlahnya tidak berubah setelah penolakan',
+    (await panggil(`/bill/${bill.id}`)).data.item.find((x) => x.id === barisPertama.id).jumlah === 2);
+
+  // dikembalikan ke 3 supaya pemeriksaan sesudah ini tetap cocok
+  await ubah(barisPertama.id, 3);
 
   const isi = (await panggil(`/bill/${bill.id}`)).data;
   cek('Tagihan berjalan dihitung benar', isi.subtotal === produkJual.harga_diskon ?? produkJual.harga ? true : true, rp(isi.subtotal));
@@ -306,6 +344,16 @@ bagian('8. BILL DIBATALKAN MENGEMBALIKAN STOK');
     jumlah: 1,
   });
   cek('Bill yang sudah batal tidak bisa ditambah barang', ditambah.status === 409, ditambah.pesan);
+
+  // Bill yang sudah ditutup juga tidak boleh diubah jumlahnya, kalau tidak
+  // stoknya bergerak padahal transaksinya sudah dibayar.
+  const isiSelesai = (await panggil(`/bill/${billTertutupId}`)).data;
+  const barisTutup = isiSelesai.item[0];
+  const coba = await panggil(`/bill/${billTertutupId}/item/${barisTutup.id}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ jumlah: 9 }),
+  });
+  cek('Bill yang sudah ditutup tidak bisa diubah jumlahnya', coba.status === 409, coba.pesan);
 }
 
 /* ================================================================== */
@@ -501,6 +549,7 @@ bagian('12. LOG AKTIVITAS');
   const ada = (a) => log.some((l) => l.aksi === a);
   cek('Buka bill tercatat', ada('buka_bill'));
   cek('Tambah barang ke bill tercatat', ada('tambah_barang_bill'));
+  cek('Ubah jumlah barang di bill tercatat', ada('ubah_jumlah_barang_bill'));
   cek('Tutup bill tercatat', ada('tutup_bill'));
   cek('Batal bill tercatat', ada('batal_bill'));
   cek('Tukar barang tercatat', ada('tukar_barang'));

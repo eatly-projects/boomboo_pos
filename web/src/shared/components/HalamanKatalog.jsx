@@ -11,41 +11,10 @@ import { Button } from '@/shared/components/ui/button';
 import { Input, InputRupiah, Kolom } from '@/shared/components/ui/input';
 import { Pilihan } from '@/shared/components/ui/select';
 import { Dialog, DialogContent, DialogFooter } from '@/shared/components/ui/dialog';
-import { KepalaHalaman, Kosong, Rangka, Label, Pemberitahuan } from '@/shared/components/ui/tampilan';
+import { KepalaHalaman, Kosong, Rangka, Label, Pemberitahuan, Saklar } from '@/shared/components/ui/tampilan';
 import { cn } from '@/shared/lib/utils';
 
 const KOSONG = { nama: '', harga: '', harga_diskon: '', nama_diskon: '' };
-
-/* ---------------------------------------------------------------- */
-/* Saklar sederhana                                                  */
-/* ---------------------------------------------------------------- */
-function Saklar({ nyala, onUbah, judul, keterangan }) {
-  return (
-    <button
-      type="button"
-      onClick={() => onUbah(!nyala)}
-      className="flex w-full items-start gap-3 rounded-xl border-2 border-netral-200 p-3.5 text-left transition-colors hover:border-coklat-200"
-    >
-      <span
-        className={cn(
-          'mt-0.5 flex h-6 w-11 shrink-0 items-center rounded-full p-0.5 transition-colors',
-          nyala ? 'bg-daun-500' : 'bg-netral-300'
-        )}
-      >
-        <span
-          className={cn(
-            'size-5 rounded-full bg-white transition-transform',
-            nyala && 'translate-x-5'
-          )}
-        />
-      </span>
-      <span className="min-w-0">
-        <span className="block text-sm font-bold text-coklat-900">{judul}</span>
-        <span className="mt-0.5 block text-xs text-coklat-400">{keterangan}</span>
-      </span>
-    </button>
-  );
-}
 
 /* ---------------------------------------------------------------- */
 /* Pemilih penyusun menu                                             */
