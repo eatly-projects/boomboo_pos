@@ -96,14 +96,27 @@ export function nomorWaTampil(nomor) {
 /** Label metode pembayaran, ditulis utuh tanpa singkatan yang membingungkan. */
 export const labelMetode = (m) => (m === 'qris' ? 'QRIS' : 'Belum dipilih');
 
+/**
+ * Keadaan transaksi: hanya satu, dan bisa berubah sepanjang hidupnya.
+ * Sengaja TIDAK memuat "hasil tukar", karena itu asal-usul, bukan keadaan.
+ * Lihat labelAsal di bawah.
+ */
 export const labelStatus = (s) =>
   ({
     menunggu_pembayaran: 'Menunggu pembayaran',
-    selesai: 'Selesai',
-    batal: 'Dibatalkan',
-    ditukar: 'Ditukar',
+    selesai: 'Berhasil',
+    batal: 'Gagal',
+    ditukar: 'Sudah ditukar',
     terbuka: 'Masih terbuka',
   })[s] || s;
+
+/**
+ * Asal-usul transaksi: menempel selamanya dan tidak pernah berubah.
+ * Dipisahkan dari keadaan karena satu transaksi hasil tukar masih bisa
+ * dibatalkan atau ditukar lagi. Kalau digabung jadi satu kolom, salah
+ * satu keterangannya pasti hilang.
+ */
+export const labelAsal = (t) => (t?.ditukar_dari_id ? 'Hasil tukar' : null);
 
 export const labelStatusStruk = (s) =>
   ({

@@ -666,6 +666,13 @@ export async function daftar(query = {}) {
   };
 
   if (query.status) tambahSyarat('t.status = $?', query.status);
+
+  // Asal-usul transaksi, terpisah dari keadaannya. Satu transaksi hasil tukar
+  // bisa saja ikut dibatalkan atau ditukar lagi, jadi dua hal ini tidak boleh
+  // ditumpuk ke dalam satu kolom status.
+  if (query.asal === 'hasil_tukar') syarat.push('t.ditukar_dari_id is not null');
+  if (query.asal === 'bukan_hasil_tukar') syarat.push('t.ditukar_dari_id is null');
+
   if (query.kasir_id) tambahSyarat('t.kasir_id = $?', query.kasir_id);
   if (query.cari) tambahSyarat('t.nomor ilike $?', `%${query.cari}%`);
   if (query.tanggal_dari) tambahSyarat('t.dibuat_pada >= $?::date', query.tanggal_dari);

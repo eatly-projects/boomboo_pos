@@ -15,7 +15,7 @@ permintaan perubahan dari user (R1–R6.2) juga dikerjakan dan diuji.
 | Tabel basis data | 17 |
 | Fitur backend | 12 |
 | Halaman frontend | 19 |
-| Uji alur kasir otomatis | 79 pemeriksaan |
+| Uji alur kasir otomatis | 87 pemeriksaan |
 
 ---
 
@@ -109,7 +109,7 @@ terhitung benar.
 
 ### Uji alur kasir otomatis — `npm run uji`
 
-**79 pemeriksaan, semuanya lulus**, terbagi 12 bagian:
+**87 pemeriksaan, semuanya lulus**, terbagi 12 bagian:
 
 | Bagian | Yang dibuktikan |
 |---|---|
@@ -121,7 +121,7 @@ terhitung benar.
 | 6. Alasan stok keluar | 7 alasan tersedia, laporan memisahkan "sengaja" dari "kerusakan" |
 | 7. Open Bill | Stok langsung berkurang saat barang masuk bill, dicabut berarti kembali, ditutup jadi transaksi, **stok tidak dipotong dua kali**, struk langsung masuk antrian |
 | 8. Bill dibatalkan | Seluruh stok kembali, dan bill yang sudah batal tidak bisa ditambah barang |
-| 9. Tukar barang lebih mahal | Selisih positif, stok bergerak dua arah, transaksi lama ditandai `ditukar`, **uang hari lama tidak ikut pindah** |
+| 9. Tukar barang lebih mahal | Selisih positif, stok bergerak dua arah, transaksi lama ditandai `ditukar`, **uang hari lama tidak ikut pindah**. Termasuk penandaan: tanda "hasil tukar" tetap menempel walaupun transaksinya kemudian dibatalkan |
 | 10. Tukar barang lebih murah | Tanpa memilih sumber dana ditolak, pengembalian uang tercatat, laporan talangan kasir terisi |
 | 11. Penjagaan data | Beli melebihi stok ditolak, kurangi stok tanpa alasan ditolak, produk yang masih dipakai menu tidak bisa diarsipkan, **jumlah buku besar cocok dengan angka stok di semua produk** |
 | 12. Log aktivitas | Buka/tambah/tutup/batal bill, tukar barang, dan kurangi stok semuanya tercatat beserta nama pelakunya |
@@ -208,3 +208,4 @@ Kosongkan dengan `npm run seed:bersihkan` sebelum dipakai berjualan sungguhan.
 | 1 Oktober 2026 | Tombol tidak lagi gepeng dan tidak lagi tertutup bilah tombol bawaan HP |
 | **2 Oktober 2026** | **R1–R6.2 dikerjakan seluruhnya dalam satu hari: tunai dihapus, gambar dihapus, Open Bill, Tukar Barang, alasan stok keluar, foto dihapus, toggle dijual satuan, dan menu berpenyusun** |
 | 2 Oktober 2026 | Uji alur kasir diperluas dari 27 jadi 79 pemeriksaan, dan dibuat tahan terhadap kasir lain yang berjualan bersamaan |
+| 2 Oktober 2026 | Penandaan transaksi dipisah jadi dua: **Keadaan** (Berhasil / Gagal / Sudah ditukar / Menunggu pembayaran) dan **Asal** ("Hasil tukar"). Keduanya bisa disaring bersamaan. Uji jadi 87 pemeriksaan |

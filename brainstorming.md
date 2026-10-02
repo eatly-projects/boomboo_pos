@@ -416,6 +416,7 @@ Lihat bagian 11 untuk rinciannya beserta rekomendasi.
 | **K38** | **Menu tidak boleh berisi menu lain.** Satu lapis saja |
 | **K39** | Menu boleh punya penyusun **sebagian** - hanya barang yang stoknya memang dicatat |
 | **K40** | **Open Bill:** tiap bill punya nomor sendiri, bisa dicari lewat nama/nomor telepon, punya kolom penanda opsional (contoh "meja 4"), bisa dilanjutkan dari kasir mana pun, bisa dibatalkan (stok kembali), dan menampilkan sudah berapa lama terbuka |
+| **K41** | **Penandaan transaksi dipisah jadi dua, bukan satu.** Lutfi minta empat kategori (gagal, berhasil, void, after void). Dibuat dua label terpisah karena kalau ditumpuk jadi satu kolom, informasinya hilang di dua kasus nyata: transaksi hasil tukar yang **ditukar lagi**, dan transaksi hasil tukar yang **dibatalkan**. Label 1 **Keadaan** (berubah sepanjang hidup transaksi): Menunggu pembayaran / Berhasil / Gagal / Sudah ditukar. Label 2 **Asal** (menempel selamanya): "Hasil tukar", dibaca dari `ditukar_dari_id`, tanpa kolom baru. Di layar istilah "void" dan "after void" tidak dipakai karena pemakainya orang awam |
 
 ---
 

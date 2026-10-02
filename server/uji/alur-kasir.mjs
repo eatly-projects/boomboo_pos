@@ -366,6 +366,56 @@ bagian('9. TUKAR BARANG: PENGGANTI LEBIH MAHAL (R4)');
   );
   cek('Transaksi lama tidak bisa dibatalkan lagi',
     (await kirim(`/transaksi/${trx.id}/batal`, {})).status === 409);
+
+  /* --- penandaan: keadaan dan asal-usul dipisah --- */
+  const cariAsal = async (asal, tambahan = '') =>
+    (await panggil(`/transaksi?asal=${asal}&per_halaman=200${tambahan}`)).data.daftar;
+
+  const hasilTukar = await cariAsal('hasil_tukar');
+  cek(
+    'Transaksi pengganti bertanda "hasil tukar"',
+    hasilTukar.some((x) => x.id === tukar.data.id),
+    `${hasilTukar.length} transaksi hasil tukar`
+  );
+  cek(
+    'Transaksi lama TIDAK ikut bertanda "hasil tukar"',
+    !hasilTukar.some((x) => x.id === trx.id)
+  );
+  cek(
+    'Semua yang bertanda hasil tukar memang punya transaksi asal',
+    hasilTukar.every((x) => x.ditukar_dari_id)
+  );
+  cek(
+    'Saringan "bukan hasil tukar" memuat transaksi lama',
+    (await cariAsal('bukan_hasil_tukar')).some((x) => x.id === trx.id)
+  );
+  cek(
+    'Transaksi lama masuk saringan keadaan "sudah ditukar"',
+    (await panggil('/transaksi?status=ditukar&per_halaman=200')).data.daftar.some(
+      (x) => x.id === trx.id
+    )
+  );
+
+  // Inilah alasan keadaan dan asal dipisah: transaksi pengganti yang
+  // dibatalkan harus tetap kelihatan berasal dari penukaran.
+  const ulang = (await kirim('/transaksi', {
+    item: [{ jenis_barang: 'produk', barang_id: murah.id, jumlah: 1 }],
+  })).data;
+  await kirim(`/transaksi/${ulang.id}/konfirmasi`, {});
+  const tukarKedua = await kirim(`/transaksi/${ulang.id}/tukar`, {
+    dikembalikan: [{ item_id: (await panggil(`/transaksi/${ulang.id}`)).data.item[0].id, jumlah: 1 }],
+    pengganti: [{ jenis_barang: 'produk', barang_id: mahal.id, jumlah: 1 }],
+  });
+  await kirim(`/transaksi/${tukarKedua.data.id}/batal`, { alasan: 'Uji penandaan' });
+  const sesudahBatal = (await panggil(`/transaksi/${tukarKedua.data.id}`)).data;
+  cek('Transaksi hasil tukar yang dibatalkan keadaannya jadi gagal',
+    sesudahBatal.status === 'batal');
+  cek('Tanda "hasil tukar" tetap menempel walaupun sudah dibatalkan',
+    Boolean(sesudahBatal.ditukar_dari_id));
+  cek(
+    'Dua saringan bisa dipakai bersamaan',
+    (await cariAsal('hasil_tukar', '&status=batal')).some((x) => x.id === tukarKedua.data.id)
+  );
 }
 
 /* ================================================================== */

@@ -4,35 +4,41 @@ import { useQuery } from '@tanstack/react-query';
 import { LuSearch, LuReceipt, LuFilter, LuTriangleAlert, LuChevronRight } from 'react-icons/lu';
 import { ambil } from '@/shared/lib/api';
 import {
-  rupiah, tanggalJam, keIsoTanggal, labelMetode, labelStatus, rentangTanggal,
+  rupiah, tanggalJam, keIsoTanggal, labelMetode, labelStatus, labelAsal, rentangTanggal,
 } from '@/shared/lib/format';
 import { Button } from '@/shared/components/ui/button';
 import { Input, Kolom } from '@/shared/components/ui/input';
 import { Pilihan } from '@/shared/components/ui/select';
 import { KepalaHalaman, Kosong, Rangka, Label } from '@/shared/components/ui/tampilan';
 
+// Keadaan transaksi: hanya satu, dan bisa berubah.
 const STATUS = [
-  { nilai: 'semua', label: 'Semua status' },
-  { nilai: 'selesai', label: 'Selesai' },
+  { nilai: 'semua', label: 'Semua keadaan' },
+  { nilai: 'selesai', label: 'Berhasil' },
   { nilai: 'menunggu_pembayaran', label: 'Menunggu pembayaran' },
-  { nilai: 'batal', label: 'Dibatalkan' },
+  { nilai: 'batal', label: 'Gagal' },
+  { nilai: 'ditukar', label: 'Sudah ditukar' },
 ];
 
-const METODE = [
-  { nilai: 'semua', label: 'Semua cara bayar' },
-  { nilai: 'qris', label: 'QRIS' },
-  { nilai: 'tunai', label: 'Tunai' },
+// Asal-usul transaksi: menempel selamanya. Sengaja jadi penyaring sendiri
+// supaya bisa dipakai bersamaan dengan keadaan di atas, misalnya
+// "yang Gagal dan asalnya dari penukaran".
+const ASAL = [
+  { nilai: 'semua', label: 'Semua asal' },
+  { nilai: 'hasil_tukar', label: 'Hasil tukar saja' },
+  { nilai: 'bukan_hasil_tukar', label: 'Bukan hasil tukar' },
 ];
 
 const warnaStatus = (s) =>
-  ({ selesai: 'hijau', menunggu_pembayaran: 'kuning', batal: 'merah' })[s] || 'netral';
+  ({ selesai: 'hijau', menunggu_pembayaran: 'kuning', batal: 'merah', ditukar: 'kuning' })[s] ||
+  'netral';
 
 export default function HalamanTransaksi() {
   const hariIni = keIsoTanggal(new Date());
   const [saring, setSaring] = useState({
     cari: '',
     status: 'semua',
-    metode_bayar: 'semua',
+    asal: 'semua',
     tanggal_dari: '',
     tanggal_sampai: '',
   });
@@ -44,7 +50,7 @@ export default function HalamanTransaksi() {
     per_halaman: 25,
     ...(saring.cari ? { cari: saring.cari } : {}),
     ...(saring.status !== 'semua' ? { status: saring.status } : {}),
-    ...(saring.metode_bayar !== 'semua' ? { metode_bayar: saring.metode_bayar } : {}),
+    ...(saring.asal !== 'semua' ? { asal: saring.asal } : {}),
     ...(saring.tanggal_dari ? { tanggal_dari: saring.tanggal_dari } : {}),
     ...(saring.tanggal_sampai ? { tanggal_sampai: saring.tanggal_sampai } : {}),
   };
@@ -87,11 +93,11 @@ export default function HalamanTransaksi() {
 
       {saringTerbuka && (
         <div className="animasi-naik mb-4 grid gap-3 rounded-2xl border-2 border-netral-200 bg-white p-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Kolom label="Status">
+          <Kolom label="Keadaan transaksi">
             <Pilihan nilai={saring.status} onUbah={ubah('status')} daftar={STATUS} />
           </Kolom>
-          <Kolom label="Cara bayar">
-            <Pilihan nilai={saring.metode_bayar} onUbah={ubah('metode_bayar')} daftar={METODE} />
+          <Kolom label="Asal transaksi">
+            <Pilihan nilai={saring.asal} onUbah={ubah('asal')} daftar={ASAL} />
           </Kolom>
           <Kolom label="Tanggal mulai">
             <Input
@@ -143,6 +149,7 @@ export default function HalamanTransaksi() {
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="angka font-bold text-coklat-900">{t.nomor}</span>
                     <Label warna={warnaStatus(t.status)}>{labelStatus(t.status)}</Label>
+                    {labelAsal(t) && <Label warna="biru">{labelAsal(t)}</Label>}
                     {t.metode_bayar && <Label warna="netral">{labelMetode(t.metode_bayar)}</Label>}
                     {t.ditandai_stok_kurang && (
                       <Label warna="merah">

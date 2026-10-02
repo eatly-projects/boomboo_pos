@@ -8,7 +8,7 @@ import {
 import toast from 'react-hot-toast';
 import { ambil, api, denganToast } from '@/shared/lib/api';
 import {
-  rupiah, tanggalJam, labelMetode, labelStatus, labelStatusStruk, nomorWaTampil,
+  rupiah, tanggalJam, labelMetode, labelStatus, labelAsal, labelStatusStruk, nomorWaTampil,
 } from '@/shared/lib/format';
 import { Button } from '@/shared/components/ui/button';
 import { Textarea, Kolom } from '@/shared/components/ui/input';
@@ -109,6 +109,7 @@ export default function DetailTransaksi() {
 
       <div className="mb-4 flex flex-wrap gap-2">
         <Label warna={warnaStatus(t.status)}>{labelStatus(t.status)}</Label>
+        {labelAsal(t) && <Label warna="biru">{labelAsal(t)}</Label>}
         {t.metode_bayar && <Label warna="netral">{labelMetode(t.metode_bayar)}</Label>}
         <Label warna="netral">Struk: {labelStatusStruk(t.status_struk)}</Label>
       </div>
