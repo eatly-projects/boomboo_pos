@@ -68,7 +68,7 @@ cek('Tabel aplikasi lain tetap utuh', punyaMereka[0].n === 49, `${punyaMereka[0]
 bagian('2. AKUN PENGGUNA');
 
 const masuk = await kirim('/auth/masuk', {
-  email: 'lutfi@boomboo.id',
+  email: 'lutfi_new@boomboo.id',
   password: process.env.SANDI_UJI,
 });
 token = masuk.data?.token;
@@ -79,10 +79,13 @@ if (!token) {
   process.exit(1);
 }
 
-const { rows: user } = await kueri('select count(*)::int n from users');
-cek('Enam akun ikut pindah', user[0].n === 6, `${user[0].n} akun`);
+const { rows: user } = await kueri('select nama, email from users order by dibuat_pada');
+cek('Akun sudah ada di basis data baru', user.length > 0, `${user.length} akun`);
+cek('Ada akun pemilik', (await kueri("select count(*)::int n from users where role = 'pemilik'")).rows[0].n > 0);
+cek('Akun contoh lama sudah tidak ada',
+  !user.some((u) => ['lutfi@boomboo.id', 'sari@boomboo.id', 'bagus@boomboo.id'].includes(u.email)));
 cek('Kata sandi lama sudah tidak berlaku',
-  (await kirim('/auth/masuk', { email: 'lutfi@boomboo.id', password: 'boomboo123' })).status === 401);
+  (await kirim('/auth/masuk', { email: 'lutfi_new@boomboo.id', password: 'boomboo123' })).status === 401);
 
 /* ================================================================== */
 bagian('3. PRODUK DARI BERKAS PRICE LIST');
@@ -91,12 +94,21 @@ const produk = (await panggil('/produk')).data || [];
 cek('Sebelas produk masuk', produk.length === 11, `${produk.length} produk`);
 cek('Harganya sesuai berkas',
   produk.find((p) => p.nama === 'Sambal Daun Jeruk Sachet Level 4')?.harga === 69000);
-cek('Stok semuanya masih nol', produk.every((p) => p.stok === 0), produk.map((p) => p.stok).join(','));
+// Stoknya tidak lagi diperiksa harus nol - begitu tim mulai mengisi stok
+// sungguhan, angkanya memang harus berubah. Yang diperiksa adalah hal yang
+// tetap benar seumur hidup aplikasi.
+cek('Tidak ada stok yang minus', produk.every((p) => p.stok >= 0), produk.map((p) => p.stok).join(','));
 cek('Semuanya dijual satuan', produk.every((p) => p.dijual_satuan === true));
 cek('Menu masih kosong', ((await panggil('/menu')).data || []).length === 0);
 
 /* ================================================================== */
 bagian('4. ALUR JUALAN SUNGGUHAN DI BASIS DATA BARU');
+
+// Dicatat sebelum apa pun dibuat, supaya pembersihan di bagian 5 hanya
+// menyentuh baris buatan uji ini - tidak menghapus data sungguhan yang
+// mungkin sudah ada di basis data.
+const { rows: tanda } = await kueri('select now() as mulai');
+const MULAI = tanda[0].mulai;
 
 const uji = produk.find((p) => p.nama === 'Sambal Daun Jeruk Level 2');
 const stok = async () => (await panggil(`/produk/${uji.id}`)).data.stok;
@@ -148,27 +160,50 @@ cek('Semua catatan punya nama pelaku', log.every((l) => Boolean(l.nama_user)));
 /* ================================================================== */
 bagian('5. DATA UJI DIBERSIHKAN LAGI');
 
-// Tautan silang antara transaksi dan bill dilepas dulu, persis seperti yang
-// dilakukan npm run seed:bersihkan.
-await kueri('update transaksi set bill_id = null, ditukar_dari_id = null, ditukar_ke_id = null');
-await kueri('update bill set transaksi_id = null');
-for (const t of [
-  'log_aktivitas', 'pergerakan_stok', 'penukaran_item', 'pengembalian_uang',
-  'bill_item', 'transaksi_item', 'bill', 'transaksi', 'kontak_whatsapp',
-  'urutan_nomor', 'urutan_nomor_bill',
-]) {
-  await kueri(`delete from ${t}`);
-}
-await kueri('update produk set stok = 0');
+// HANYA baris buatan uji ini yang dihapus, disaring dari waktu mulainya.
+// Basis data ini sudah dipakai sungguhan, jadi penghapusan borongan tidak
+// boleh dilakukan di sini - stok dan log yang sudah diisi orang harus selamat.
+const idTransaksi = [trx.data.id, tutup.data.id];
+
+await kueri('update transaksi set bill_id = null where id = any($1)', [idTransaksi]);
+await kueri('update bill set transaksi_id = null where id = $1', [bill.data.id]);
+await kueri(
+  'delete from pergerakan_stok where transaksi_id = any($1) or bill_id = $2 or (produk_id = $3 and dibuat_pada >= $4)',
+  [idTransaksi, bill.data.id, uji.id, MULAI]
+);
+await kueri('delete from bill_item where bill_id = $1', [bill.data.id]);
+await kueri('delete from transaksi_item where transaksi_id = any($1)', [idTransaksi]);
+await kueri('delete from bill where id = $1', [bill.data.id]);
+await kueri('delete from transaksi where id = any($1)', [idTransaksi]);
+await kueri('delete from kontak_whatsapp where nomor = $1', ['6281200000000']);
+await kueri('delete from log_aktivitas where dibuat_pada >= $1', [MULAI]);
+
+// Stok dikembalikan ke angka sebelum uji, bukan dinolkan.
+await kueri('update produk set stok = $1 where id = $2', [awal, uji.id]);
 
 const { rows: sisa } = await kueri(
-  'select (select count(*)::int from transaksi) t, (select count(*)::int from bill) b, (select coalesce(sum(stok),0)::int from produk) s, (select count(*)::int from produk) p, (select count(*)::int from users) u'
+  `select (select count(*)::int from transaksi where id = any($1)) t,
+          (select count(*)::int from bill where id = $2) b,
+          (select stok from produk where id = $3) s,
+          (select count(*)::int from produk) p,
+          (select count(*)::int from users) u,
+          (select count(*)::int from log_aktivitas where dibuat_pada >= $4) l`,
+  [idTransaksi, bill.data.id, uji.id, MULAI]
 );
 cek('Transaksi uji terhapus', sisa[0].t === 0);
 cek('Bill uji terhapus', sisa[0].b === 0);
-cek('Stok kembali nol', sisa[0].s === 0);
+cek('Log buatan uji terhapus', sisa[0].l === 0);
+cek('Stok kembali seperti sebelum uji', sisa[0].s === awal, `${sisa[0].s}`);
 cek('Sebelas produk tetap ada', sisa[0].p === 11);
-cek('Enam akun tetap ada', sisa[0].u === 6);
+cek('Akun tetap ada', sisa[0].u > 0, `${sisa[0].u} akun`);
+
+const { rows: silangAkhir } = await kueri(`
+  select p.id from produk p
+    left join pergerakan_stok g on g.produk_id = p.id
+   group by p.id, p.stok
+  having p.stok <> coalesce(sum(g.jumlah), 0)::int`);
+cek('Buku besar stok tetap cocok sesudah dibersihkan', silangAkhir.length === 0,
+  `${silangAkhir.length} produk tidak cocok`);
 
 const { rows: akhir } = await kueri('select count(*)::int n from public.ingredients');
 cek('Data aplikasi lain tetap utuh sesudah semuanya', akhir[0].n === 52, `${akhir[0].n} bahan`);

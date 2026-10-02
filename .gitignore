@@ -44,3 +44,6 @@ BO_BrandBook_2024.pdf
 # sudah disalin ke server/seed/isi-produk-asli.js
 docs/Price List CBE.xlsx
 *.xlsx
+
+# Tangkapan layar dan berkas titipan Lutfi - sering memuat kredensial
+jangan_push/
