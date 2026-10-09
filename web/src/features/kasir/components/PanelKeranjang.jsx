@@ -179,7 +179,17 @@ export default function PanelKeranjang({ onLanjut, sedangKirim, className }) {
         )}
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-4">
+      {/*
+        Bagian yang bisa digulung: daftar barang, kotak diskon, dan rincian
+        hitungannya. Kotak diskon sengaja ditaruh di sini, bukan di bawah -
+        waktu dibuka tingginya hampir 200 piksel, dan itulah yang dulu
+        mendorong tombol Lanjut keluar layar di HP.
+
+        Dipakai `grow`, bukan `flex-1`. Bedanya `flex-1` ikut menyetel
+        flex-basis jadi 0, dan di wadah tinggi-otomatis seperti panel yang
+        menempel di bawah layar HP itu membuat isinya ikut menciut habis.
+      */}
+      <div className="min-h-0 grow overflow-y-auto px-4">
         {item.length === 0 ? (
           <Kosong
             ikon={LuShoppingCart}
@@ -187,33 +197,43 @@ export default function PanelKeranjang({ onLanjut, sedangKirim, className }) {
             keterangan="Pilih produk atau menu di sebelah kiri untuk mulai melayani pembeli."
           />
         ) : (
-          <div className="divide-y-2 divide-netral-100">
-            {item.map((i) => (
-              <BarisItem key={i.kunci} item={i} setJumlah={setJumlah} hapus={hapus} />
-            ))}
-          </div>
+          <>
+            <div className="divide-y-2 divide-netral-100">
+              {item.map((i) => (
+                <BarisItem key={i.kunci} item={i} setJumlah={setJumlah} hapus={hapus} />
+              ))}
+            </div>
+
+            <div className="space-y-3 border-t-2 border-netral-200 pb-4 pt-4">
+              <KotakDiskon />
+
+              <div className="space-y-1.5 text-sm">
+                <div className="flex justify-between text-coklat-600">
+                  <span>Subtotal</span>
+                  <span className="angka font-semibold">{rupiah(subtotal)}</span>
+                </div>
+                {potongan > 0 && (
+                  <div className="flex justify-between text-daun-700">
+                    <span>Diskon</span>
+                    <span className="angka font-semibold">- {rupiah(potongan)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
         )}
       </div>
 
+      {/*
+        Yang dipaku di bawah tinggal total dan tombolnya. Tingginya tetap
+        kira-kira 110 piksel apa pun isi keranjangnya, jadi tombol ini tidak
+        akan pernah lagi terdorong keluar layar.
+      */}
       {item.length > 0 && (
-        <div className="pb-aman-4 shrink-0 space-y-3 border-t-2 border-netral-200 px-4 pt-4">
-          <KotakDiskon />
-
-          <div className="space-y-1.5 text-sm">
-            <div className="flex justify-between text-coklat-600">
-              <span>Subtotal</span>
-              <span className="angka font-semibold">{rupiah(subtotal)}</span>
-            </div>
-            {potongan > 0 && (
-              <div className="flex justify-between text-daun-700">
-                <span>Diskon</span>
-                <span className="angka font-semibold">- {rupiah(potongan)}</span>
-              </div>
-            )}
-            <div className="flex items-end justify-between border-t-2 border-netral-200 pt-2">
-              <span className="font-bold text-coklat-900">Total bayar</span>
-              <span className="angka text-xl font-extrabold text-boom-600">{rupiah(total)}</span>
-            </div>
+        <div className="pb-aman-4 shrink-0 space-y-3 border-t-2 border-netral-200 bg-white px-4 pt-3">
+          <div className="flex items-end justify-between">
+            <span className="font-bold text-coklat-900">Total bayar</span>
+            <span className="angka text-xl font-extrabold text-boom-600">{rupiah(total)}</span>
           </div>
 
           <Button ukuran="besar" className="w-full" onClick={onLanjut} disabled={sedangKirim}>

@@ -180,8 +180,20 @@ export default function Kasir() {
             onClick={() => setKeranjangTerbuka(false)}
             className="absolute inset-0 bg-coklat-900/40 backdrop-blur-[2px]"
           />
+          {/*
+            Tingginya mengikuti isi keranjang, tapi berhenti di 90% layar.
+            Panel di dalamnya sengaja TIDAK memakai h-full: wadah ini tingginya
+            otomatis, jadi tinggi 100% tidak punya acuan dan hasilnya panel
+            tumbuh melewati batas lalu terpotong. Dengan h-auto dan min-h-0,
+            panelnya menciut sendiri sampai muat, dan daftar barangnya yang
+            digulung.
+          */}
           <div className="animasi-naik absolute inset-x-0 bottom-0 flex max-h-[90dvh] flex-col overflow-hidden rounded-t-2xl bg-white">
-            <PanelKeranjang onLanjut={lanjutKePembayaran} sedangKirim={sedangKirim} />
+            <PanelKeranjang
+              className="h-auto min-h-0"
+              onLanjut={lanjutKePembayaran}
+              sedangKirim={sedangKirim}
+            />
           </div>
         </div>
       )}
