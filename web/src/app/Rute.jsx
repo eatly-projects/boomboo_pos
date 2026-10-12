@@ -27,6 +27,7 @@ const DetailBill = lazy(() => import('@/features/bill/pages/DetailBill.jsx'));
 const TukarBarang = lazy(() => import('@/features/transaksi/pages/TukarBarang.jsx'));
 const StrukPublik = lazy(() => import('@/features/struk/pages/StrukPublik.jsx'));
 const KontakWhatsapp = lazy(() => import('@/features/struk/pages/KontakWhatsapp.jsx'));
+const HalamanLaporan = lazy(() => import('@/features/laporan/pages/HalamanLaporan.jsx'));
 const HalamanLog = lazy(() => import('@/features/log/pages/HalamanLog.jsx'));
 const HalamanUser = lazy(() => import('@/features/user/pages/HalamanUser.jsx'));
 const HalamanPengaturan = lazy(() => import('@/features/pengaturan/pages/HalamanPengaturan.jsx'));
@@ -72,6 +73,7 @@ function IsiRute() {
         <Route path="/bill" element={<HalamanBill />} />
         <Route path="/bill/:id" element={<DetailBill />} />
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/laporan" element={<HalamanLaporan />} />
         <Route path="/produk" element={<HalamanProduk />} />
         <Route path="/menu" element={<HalamanMenu />} />
         <Route path="/stok" element={<HalamanStok />} />

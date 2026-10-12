@@ -3,7 +3,7 @@ import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   LuCalculator, LuLayoutDashboard, LuPackage, LuUtensils, LuBoxes,
   LuReceipt, LuSend, LuHistory, LuUsers, LuSettings, LuNotebookPen,
-  LuMenu, LuX, LuLogOut, LuPhone, LuChevronRight,
+  LuMenu, LuX, LuLogOut, LuPhone, LuChevronRight, LuFileText,
 } from 'react-icons/lu';
 import { useAuth } from '@/features/auth/auth.store';
 import LogoBoomboo from '@/shared/components/LogoBoomboo.jsx';
@@ -13,6 +13,7 @@ const MENU_UTAMA = [
   { ke: '/kasir', label: 'Kasir', ikon: LuCalculator },
   { ke: '/bill', label: 'Open Bill', ikon: LuNotebookPen },
   { ke: '/dashboard', label: 'Dashboard', ikon: LuLayoutDashboard },
+  { ke: '/laporan', label: 'Laporan Penjualan', ikon: LuFileText },
   { ke: '/transaksi', label: 'Transaksi', ikon: LuReceipt },
   { ke: '/stok', label: 'Stok', ikon: LuBoxes },
 ];

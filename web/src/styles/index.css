@@ -232,3 +232,85 @@
     }
   }
 }
+
+/* ==================================================================
+   Gaya saat dicetak (dipakai halaman Laporan Penjualan)
+
+   Yang dicetak hanya isi laporannya: sidebar, bilah atas, penyaring
+   tanggal, dan tombolnya semua disembunyikan. Warna latar dipaksa ikut
+   tercetak, kalau tidak kepala merahnya keluar putih polos.
+   ================================================================== */
+
+.sembunyi-saat-cetak {
+  display: block;
+}
+
+.hanya-saat-cetak {
+  display: none;
+}
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm 10mm;
+  }
+
+  html,
+  body {
+    background: #fff !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Paksa warna latar ikut tercetak, bukan dibuang peramban */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Kerangka aplikasi tidak ikut tercetak */
+  header,
+  aside,
+  nav,
+  .sembunyi-saat-cetak {
+    display: none !important;
+  }
+
+  .hanya-saat-cetak {
+    display: block !important;
+  }
+
+  /* Wadah isi dikembalikan ke lebar penuh kertas */
+  main,
+  main > div {
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+  }
+
+  /* Satu bagian jangan terbelah dua halaman kalau masih muat */
+  .hindari-potong-cetak {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Tabel panjang boleh terbelah, tapi nama kolomnya ikut di tiap halaman */
+  thead {
+    display: table-header-group;
+  }
+
+  tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Garis tipis lebih enak dibaca di kertas daripada garis tebal layar */
+  .hindari-potong-cetak {
+    border-width: 1px !important;
+  }
+
+  table {
+    font-size: 10pt;
+  }
+}

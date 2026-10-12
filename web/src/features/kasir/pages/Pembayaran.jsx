@@ -4,11 +4,11 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import {
   LuQrCode, LuArrowLeft, LuCircleCheck, LuTriangleAlert,
-  LuSend, LuSkipForward, LuImageOff, LuNotebookPen,
+  LuSend, LuSkipForward, LuImageOff, LuNotebookPen, LuUserCheck,
 } from 'react-icons/lu';
 import { ambil, api, denganToast } from '@/shared/lib/api';
 import { useKeranjang } from '../kasir.store';
-import { rupiah } from '@/shared/lib/format';
+import { rupiah, nomorWaTampil } from '@/shared/lib/format';
 import { Button } from '@/shared/components/ui/button';
 import { Input, Kolom } from '@/shared/components/ui/input';
 import { Rangka, Pemberitahuan } from '@/shared/components/ui/tampilan';
@@ -58,6 +58,68 @@ function LayarQris({ total, gambarQris }) {
 /* Langkah 2: data pembeli untuk struk WhatsApp                      */
 /* ---------------------------------------------------------------- */
 
+/**
+ * Saran pembeli yang nomornya sudah pernah dicatat.
+ *
+ * Sengaja berupa daftar yang HARUS diketuk, bukan terisi otomatis. Kasir yang
+ * sedang buru-buru gampang tidak sadar kalau kolomnya terisi sendiri, dan
+ * struk bisa terkirim ke orang yang salah - kesalahan yang baru ketahuan
+ * setelah pembelinya komplain.
+ *
+ * Pencarian baru jalan setelah 3 huruf/angka, dan ditunda sebentar supaya
+ * tidak menembak server tiap ketukan tombol.
+ */
+function SaranPembeli({ kata, onPilih }) {
+  const [tertunda, setTertunda] = useState('');
+
+  useEffect(() => {
+    const jeda = setTimeout(() => setTertunda(kata.trim()), 300);
+    return () => clearTimeout(jeda);
+  }, [kata]);
+
+  const cukup = tertunda.length >= 3;
+  const hasil = useQuery({
+    queryKey: ['kontak', 'saran', tertunda],
+    queryFn: () => ambil('/struk/kontak', { params: { cari: tertunda, per_halaman: 6 } }),
+    enabled: cukup,
+    staleTime: 60_000,
+  });
+
+  const daftar = hasil.data?.daftar || [];
+  if (!cukup || daftar.length === 0) return null;
+
+  return (
+    <div className="mt-2 overflow-hidden rounded-xl border-2 border-daun-300 bg-daun-50">
+      <p className="flex items-center gap-1.5 border-b border-daun-300 px-3 py-2 text-xs font-bold text-daun-700">
+        <LuUserCheck className="size-3.5" />
+        Pembeli ini sudah pernah dicatat, ketuk untuk memakainya
+      </p>
+      <div className="divide-y divide-daun-300">
+        {daftar.map((k) => (
+          <button
+            key={k.id}
+            type="button"
+            onClick={() => onPilih(k)}
+            className="flex w-full items-center justify-between gap-3 px-3 py-2.5 text-left transition-colors hover:bg-daun-100"
+          >
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-bold text-coklat-900">
+                {k.nama || 'Tanpa nama'}
+              </span>
+              <span className="angka block text-xs text-coklat-600">
+                {nomorWaTampil(k.nomor)}
+              </span>
+            </span>
+            <span className="angka shrink-0 text-right text-xs text-coklat-400">
+              {k.jumlah_transaksi}x belanja
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function FormPembeli({ transaksi, onSelesai }) {
   // Kalau transaksinya berasal dari Open Bill, nama dan nomornya sudah
   // diisi sejak bill dibuka, jadi kasir tidak perlu menanyakannya lagi.
@@ -66,6 +128,17 @@ function FormPembeli({ transaksi, onSelesai }) {
   const [nama, setNama] = useState(transaksi.nama_pembeli || '');
   const [nomor, setNomor] = useState('');
   const [sedangKirim, setSedangKirim] = useState(false);
+  // Kolom mana yang sedang diketik, supaya sarannya muncul di bawah kolom itu
+  // saja - bukan dua-duanya sekaligus.
+  const [kolomAktif, setKolomAktif] = useState(null);
+  const [dariKontak, setDariKontak] = useState(null);
+
+  function pakaiKontak(k) {
+    setNama(k.nama || '');
+    setNomor(k.nomor);
+    setDariKontak(k);
+    setKolomAktif(null);
+  }
 
   async function simpan() {
     if (!nomor.trim()) return toast.error('Nomor WhatsApp belum diisi.');
@@ -131,27 +204,60 @@ function FormPembeli({ transaksi, onSelesai }) {
           </p>
 
           <div className="mt-4 space-y-3">
-            <Kolom label="Nama pembeli" bantuan="Boleh dikosongkan.">
-              <Input
-                placeholder="Contoh: Sari"
-                value={nama}
-                onChange={(e) => setNama(e.target.value)}
-              />
-            </Kolom>
+            <div>
+              <Kolom label="Nama pembeli" bantuan="Boleh dikosongkan.">
+                <Input
+                  placeholder="Contoh: Sari"
+                  value={nama}
+                  onChange={(e) => {
+                    setNama(e.target.value);
+                    setDariKontak(null);
+                    setKolomAktif('nama');
+                  }}
+                  onFocus={() => setKolomAktif('nama')}
+                />
+              </Kolom>
+              {kolomAktif === 'nama' && (
+                <SaranPembeli kata={nama} onPilih={pakaiKontak} />
+              )}
+            </div>
 
-            <Kolom label="Nomor WhatsApp">
-              <Input
-                type="tel"
-                inputMode="numeric"
-                placeholder="Contoh: 081234567890"
-                value={nomor}
-                onChange={(e) => setNomor(e.target.value)}
-              />
-            </Kolom>
+            <div>
+              <Kolom label="Nomor WhatsApp">
+                <Input
+                  type="tel"
+                  inputMode="numeric"
+                  placeholder="Contoh: 081234567890"
+                  value={nomor}
+                  onChange={(e) => {
+                    setNomor(e.target.value);
+                    setDariKontak(null);
+                    setKolomAktif('nomor');
+                  }}
+                  onFocus={() => setKolomAktif('nomor')}
+                />
+              </Kolom>
+              {kolomAktif === 'nomor' && (
+                <SaranPembeli kata={nomor} onPilih={pakaiKontak} />
+              )}
+            </div>
 
-            <p className="rounded-xl bg-coklat-50 px-3 py-2.5 text-xs text-coklat-600">
-              Nomor Anda kami simpan untuk mengirim struk dan informasi promo Boomboo.
-            </p>
+            {dariKontak ? (
+              <p className="flex items-start gap-2 rounded-xl bg-daun-50 px-3 py-2.5 text-xs text-daun-700">
+                <LuUserCheck className="mt-0.5 size-3.5 shrink-0" />
+                <span>
+                  Diambil dari pembeli yang sudah tercatat
+                  {dariKontak.jumlah_transaksi > 0 && (
+                    <> &middot; sudah {dariKontak.jumlah_transaksi} kali belanja</>
+                  )}
+                  . Tidak perlu diketik ulang.
+                </span>
+              </p>
+            ) : (
+              <p className="rounded-xl bg-coklat-50 px-3 py-2.5 text-xs text-coklat-600">
+                Nomor Anda kami simpan untuk mengirim struk dan informasi promo Boomboo.
+              </p>
+            )}
           </div>
 
           <div className="mt-4 flex flex-col gap-2 sm:flex-row">

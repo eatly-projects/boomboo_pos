@@ -130,6 +130,51 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/*
+        Angka seumur hidup aplikasi. Sengaja dipisah dari kartu-kartu di bawah
+        dan diberi keterangan "sejak aplikasi dipakai", karena semua kartu lain
+        ikut berubah saat penyaring tanggal digeser. Kalau ditaruh berjejer
+        dengan mereka, orang akan mengira angka ini ikut tersaring juga.
+      */}
+      {sorotan && (
+        <div className="mb-4 overflow-hidden rounded-2xl border-2 border-coklat-900 bg-coklat-900">
+          <div className="flex flex-wrap items-center gap-x-8 gap-y-3 px-4 py-3.5 sm:px-5">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-white/60">
+                Transaksi berhasil sejak aplikasi dipakai
+              </p>
+              <p className="angka mt-0.5 text-2xl font-extrabold tracking-tight text-white sm:text-3xl">
+                {angka(sorotan.transaksi_berhasil)}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-x-6 gap-y-2">
+              <div>
+                <p className="text-xs text-white/60">Dibatalkan</p>
+                <p className="angka text-base font-bold text-white">
+                  {angka(sorotan.transaksi_gagal)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-white/60">Belum dibayar</p>
+                <p className="angka text-base font-bold text-white">
+                  {angka(sorotan.belum_dibayar)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs text-white/60">Kontak pembeli</p>
+                <p className="angka text-base font-bold text-white">
+                  {angka(sorotan.jumlah_kontak)}
+                </p>
+              </div>
+            </div>
+          </div>
+          <p className="bg-white/10 px-4 py-2 text-xs text-white/60 sm:px-5">
+            Angka ini tidak ikut berubah saat tanggal di atas diganti.
+          </p>
+        </div>
+      )}
+
       {/* Pemberitahuan yang butuh tindakan */}
       {sorotan?.struk_belum_terkirim > 0 && (
         <Pemberitahuan warna="kuning" className="mb-4" ikon={LuSend} judul="Ada struk yang belum dikirim">

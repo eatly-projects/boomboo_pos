@@ -137,6 +137,45 @@ sudah dibuka dan tampil benar dengan data sungguhan.
 
 ---
 
+## Tiga permintaan baru setelah event (12 Oktober 2026)
+
+Event 7-11 Oktober sudah selesai. Hasilnya: **155 transaksi berhasil, Rp 17.590.700**,
+tersebar 9-11 Oktober.
+
+| Permintaan | Keadaan |
+|---|---|
+| Export laporan penjualan harian | Selesai. Halaman **Laporan Penjualan** di sidebar |
+| Nomor/nama yang sudah ada tidak perlu diketik ulang | Selesai. Saran pembeli muncul saat mengisi struk |
+| Total transaksi berhasil di Dashboard | Selesai. Bilah gelap di atas Dashboard |
+
+### Laporan Penjualan
+
+Pilih tanggalnya (hari ini / satu tanggal / beberapa hari), lalu dua pilihan keluaran:
+
+| Bentuk | Isinya |
+|---|---|
+| **Cetak atau simpan PDF** | Halaman bermerek Boomboo, tombol dan sidebar tidak ikut tercetak, tabel panjang tetap membawa nama kolomnya di tiap halaman |
+| **Unduh Excel** | Tujuh lembar: Ringkasan, Barang Terjual, Per Kasir, Per Jam, Barang Keluar, Daftar Transaksi, Dibatalkan. Kolom uang memakai format angka asli, jadi masih bisa dijumlah sendiri |
+
+Isinya: empat angka besar (uang masuk, jumlah transaksi, rata-rata, diskon), barang
+terjual, per kasir, jam ramai, barang keluar bukan jualan, pengembalian uang,
+transaksi dibatalkan, dan daftar seluruh transaksi.
+
+**Angka laporannya memanggil ulang perhitungan Dashboard, bukan kueri baru yang
+sejenis.** Kalau ditulis dua kali, cepat atau lambat salah satunya ketinggalan
+diperbaiki dan laporan tidak lagi cocok dengan layar.
+
+### Satu temuan soal kejujuran angka
+
+Baris "barang keluar bukan karena dijual" pada 9 Oktober berjumlah **Rp 5.670.000** -
+hampir sebesar omzet sehari. Setelah diperiksa, catatannya berbunyi **"kesalahan
+input"**: itu pembetulan salah ketik, bukan barang yang benar-benar rusak. Karena itu
+laporannya sekarang menampilkan **rincian tiap baris** lengkap dengan catatan dan nama
+pencatatnya, bukan cuma totalnya, dan diberi peringatan supaya catatannya dibaca dulu
+sebelum angkanya disimpulkan sebagai kerugian.
+
+---
+
 ## Basis data: pindah ke Supabase milik user (2 Oktober 2026)
 
 Aplikasi kasir sekarang memakai **basis data yang sama dengan aplikasi Boomboo

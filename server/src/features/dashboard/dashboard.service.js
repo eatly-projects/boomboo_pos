@@ -242,6 +242,13 @@ export async function sorotan() {
        (select count(*)::int from transaksi
           where status = 'selesai' and status_struk = 'menunggu_kirim')   as struk_belum_terkirim,
        (select count(*)::int from kontak_whatsapp)                        as jumlah_kontak,
+       -- Dihitung sejak aplikasi pertama kali dipakai, dan SENGAJA tidak ikut
+       -- penyaring tanggal di dashboard. Yang ditanya pemilik adalah "sudah
+       -- berapa transaksi yang berhasil lewat aplikasi ini", bukan berapa
+       -- pada rentang yang kebetulan sedang dilihat.
+       (select count(*)::int from transaksi
+          where status in ('selesai', 'ditukar'))                        as transaksi_berhasil,
+       (select count(*)::int from transaksi where status = 'batal')      as transaksi_gagal,
        (select count(*)::int from transaksi where status = 'menunggu_pembayaran') as belum_dibayar,
        (select count(*)::int from bill where status = 'terbuka')          as bill_terbuka,
        (select coalesce(sum(jumlah), 0)::int from pengembalian_uang

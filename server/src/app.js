@@ -11,6 +11,7 @@ import transaksiRoutes from './features/transaksi/transaksi.routes.js';
 import billRoutes from './features/bill/bill.routes.js';
 import strukRoutes from './features/struk/struk.routes.js';
 import dashboardRoutes from './features/dashboard/dashboard.routes.js';
+import laporanRoutes from './features/laporan/laporan.routes.js';
 import logRoutes from './features/log/log.routes.js';
 import pengaturanRoutes from './features/pengaturan/pengaturan.routes.js';
 
@@ -53,6 +54,7 @@ app.use('/api/transaksi', transaksiRoutes);
 app.use('/api/bill', billRoutes);
 app.use('/api/struk', strukRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/laporan', laporanRoutes);
 app.use('/api/log', logRoutes);
 app.use('/api/pengaturan', pengaturanRoutes);
 
