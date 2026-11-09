@@ -176,6 +176,75 @@ sebelum angkanya disimpulkan sebagai kerugian.
 
 ---
 
+## Rekap susulan event 4-7 November 2026 (diisi 9 November 2026)
+
+Event kedua berlangsung 4-7 November 2026. **Sinyal di lokasi terganggu**, jadi
+sebagian penjualan tidak sempat masuk aplikasi dan hanya dicatat tangan. Isinya
+dimasukkan 9 November dari rekap tulisan tangan.
+
+| | Jumlah |
+|---|---|
+| Baris di rekap tulisan tangan | 104 transaksi |
+| Sudah ada di aplikasi, dilewati | 14 |
+| **Dimasukkan** | **85 transaksi, Rp 10.230.900** |
+| Dilewati karena angkanya mustahil | 5 |
+| Produk baru ditambahkan | 9 |
+| Stok masuk dicatat menyusul | 12 produk |
+
+### Keadaan event 4-7 November sesudah diisi
+
+| Tanggal | Transaksi berhasil | Uang masuk |
+|---|---|---|
+| 4 Nov | 17 | Rp 1.860.600 |
+| 5 Nov | 33 | Rp 3.854.950 |
+| 6 Nov | 34 | Rp 4.300.970 |
+| 7 Nov | 40 | Rp 4.422.700 |
+| **Total** | **124** | **Rp 14.439.220** |
+
+Barang terlaris: Sambal Ikan Cakalang Daun Jeruk Level 2, 88 pcs, Rp 4.224.000.
+Rata-rata per transaksi Rp 116.445. Diskon Rp 3.629.780 dari harga normal
+Rp 18.069.000.
+
+### Perintahnya
+
+```
+npm run seed:rekap-nov -- "../docs/rekap-event-4-7-november-2026.txt"            # hanya memeriksa
+npm run seed:rekap-nov -- "../docs/rekap-event-4-7-november-2026.txt" --tulis    # menulis
+```
+
+**Aman dijalankan berulang.** Baris yang tanggal + keranjang + totalnya sudah
+sama dengan transaksi yang ada dianggap sudah masuk, jadi menjalankan dua kali
+tidak menggandakan apa pun. Sudah dibuktikan: jalan kedua melaporkan 99 sudah
+ada, 0 dimasukkan. Semuanya dalam satu transaksi basis data, dan sebelum commit
+ada cek silang stok dan cek jumlah uang - kalau tidak cocok, semuanya dibatalkan.
+
+### Lima baris yang masih menunggu koreksi
+
+Angkanya tidak mungkin benar, dan sengaja tidak ditebak:
+
+| Tanggal | Tulisan di rekap | Masalahnya |
+|---|---|---|
+| 4 Nov | `cakalang lvl 2 haraga 100000` | 1 cakalang = Rp 48.000, bukan Rp 100.000 |
+| 4 Nov | `cakalang lvl 2 4, cumi lvl 2 4, 537600` | 8 pcs paling mahal Rp 384.000 |
+| 4 Nov | `teri lvl 2 1, teri lvl 2 2, 86400` | teri Lv2 tertulis dua kali, kemungkinan yang kedua Lv4 |
+| 7 Nov | `Cumi lvl 2 2, cakalang lvl 2 4, cili oil 2, cumi lvl 2 1, bom chips jagung bakar 1, boom chips signature chii oil 1, 388000` | cumi Lv2 tertulis dua kali |
+| 7 Nov | `Boom chips salted egg 1, 2000` | kemungkinan maksudnya Rp 20.000 |
+
+Nilainya kalau nanti dibetulkan: sekitar Rp 1,1 juta. Begitu dibetulkan di
+`docs/rekap-event-4-7-november-2026.txt`, jalankan ulang perintah di atas -
+yang sudah masuk tidak akan dobel.
+
+### Yang perkiraan, bukan catatan
+
+- **Jam transaksinya perkiraan.** Rekap tidak mencatat jam, jadi 85 baris
+  disebar merata 11.00-17.00 mengikuti urutan tulisannya. Grafik "jam ramai"
+  untuk 4-7 November tidak bisa dipakai menyimpulkan apa pun.
+- **Kasirnya tercatat Lutfi Apriamto** untuk 85 baris itu, karena rekapnya
+  tidak menyebut siapa yang melayani. Laporan per kasir untuk rentang itu jadi
+  tidak mewakili siapa yang berjualan: Lutfi 85, indri 29, ema 10.
+
+---
+
 ## Basis data: pindah ke Supabase milik user (2 Oktober 2026)
 
 Aplikasi kasir sekarang memakai **basis data yang sama dengan aplikasi Boomboo

@@ -143,6 +143,7 @@ export const labelAksi = (a) =>
     opname: 'Stok opname',
     beri_diskon_transaksi: 'Memberi diskon di kasir',
     konfirmasi_pembayaran: 'Mengonfirmasi pembayaran',
+    isi_rekap_susulan: 'Mengisi rekap penjualan susulan',
     batal_transaksi: 'Membatalkan transaksi',
     tambah_user: 'Menambah user',
     ubah_user: 'Mengubah user',

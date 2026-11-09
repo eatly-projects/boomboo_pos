@@ -427,6 +427,10 @@ Lihat bagian 11 untuk rinciannya beserta rekomendasi.
 | **K49** | **Angka "transaksi berhasil" di Dashboard dihitung sejak aplikasi pertama dipakai**, dan sengaja TIDAK ikut penyaring tanggal. Ditaruh di bilah terpisah berwarna gelap dengan keterangan "Angka ini tidak ikut berubah saat tanggal di atas diganti", supaya tidak dikira ikut tersaring seperti kartu-kartu di bawahnya |
 | **K50** | **Saran pembeli muncul sebagai daftar yang harus diketuk, bukan terisi otomatis.** Kasir yang buru-buru gampang tidak sadar kolomnya terisi sendiri, dan struk bisa terkirim ke orang yang salah - kesalahan yang baru ketahuan setelah pembelinya komplain. Pencarian jalan setelah 3 huruf/angka, memakai endpoint kontak yang sudah ada (cocok nama maupun nomor, bentuk `08...` dan `62...`) |
 | **K51** | **Laporan menampilkan RINCIAN barang keluar bukan jualan, bukan hanya totalnya.** Pada data event 9 Oktober ada baris beralasan "rusak" senilai Rp 5.670.000 yang catatannya berbunyi "kesalahan input" - itu pembetulan salah ketik, bukan barang rusak. Tanpa catatan dan nama pencatatnya ikut terbawa, laporan terbaca seolah kerugiannya hampir sebesar omzet sehari |
+| **K52** | **Rekap susulan memakai TOTAL YANG TERTULIS sebagai sumber kebenaran, bukan hasil hitungan ulang.** Selisihnya terhadap harga normal dicatat sebagai diskon `nominal`. Alasannya `uang_masuk` harus sama dengan uang yang benar-benar diterima menurut catatan kasir; menghitung ulang berarti mengarang angka yang tidak pernah terjadi di meja kasir |
+| **K53** | **Katalog memakai harga event, bukan harga daftar, untuk Boom Chips: Rp 20.000** (daftar harga 9 Nov 2026 menulis Rp 44.000/48.000). Keputusan Lutfi 9 Nov 2026. Kalau katalog memakai Rp 44.000, laporan akan menampilkan potongan 55% yang tidak pernah diniatkan sebagai diskon. Hanya 5 rasa yang benar-benar terjual yang dimasukkan |
+| **K54** | **Baris rekap yang angkanya mustahil TIDAK ditebak, tetapi dilewati dan dilaporkan.** Lima baris (contohnya "1 cakalang = 100.000" padahal 48.000, dan "4+4 sambal = 537.600" padahal maksimal 384.000) menunggu koreksi Lutfi. Menebak isinya berarti menyelipkan angka karangan ke dalam laporan penjualan yang dipakai pemilik |
+| **K55** | **Pengisi rekap aman dijalankan berulang karena pencegah dobelnya adalah isi basis data itu sendiri**: baris yang tanggal + keranjang + totalnya sudah sama dengan transaksi yang ada dianggap sudah masuk. Bukan penanda terpisah, yang bisa hilang atau tidak ikut saat berkasnya dijalankan dari komputer lain. Terbukti: menjalankan kedua kali melaporkan 99 sudah ada, 0 dimasukkan |
 
 ---
 
@@ -465,3 +469,59 @@ Seluruh R1–R6.2 selesai dalam satu hari, sesuai permintaan K29.
 
 Halaman **Open Bill** dan **Tukar Barang** lulus uji lewat API dan `npm run build` berhasil,
 tapi belum pernah dibuka di peramban karena ekstensi peramban sedang terputus.
+
+
+---
+
+## 13. Rekap susulan event 4-7 November 2026 (dikerjakan 9 November 2026)
+
+Event kedua berlangsung **4-7 November 2026**. Sinyal di lokasi terganggu, jadi
+sebagian penjualan tidak sempat masuk aplikasi dan hanya dicatat tangan. Lutfi
+menyerahkan dua berkas: daftar harga baru (`Product List.pdf`) dan rekap tulisan
+tangan (`Hari rabu tanggal 04.docx`).
+
+### Yang ditemukan sebelum apa pun ditulis
+
+| Hal | Isinya |
+|---|---|
+| Baris di rekap | 104 transaksi (17 Rabu, 28 Kamis, 18 Jumat, 41 Sabtu) |
+| Sudah ada di aplikasi | 14 - tanggal, keranjang, dan totalnya sama persis |
+| Belum ada dan angkanya wajar | 85, senilai Rp 10.230.900 |
+| Angkanya mustahil | 5, dilewati (K54) |
+| Ada di aplikasi tapi tidak ada di rekap | 27 - dibiarkan, itu tetap sah |
+| Produk di rekap yang belum ada di katalog | 9 |
+
+**Rekap dan aplikasi dua-duanya tidak lengkap.** Itu temuan terpenting sebelum
+mengisi: kalau rekap dianggap lengkap, 27 transaksi yang hanya ada di aplikasi
+akan terbaca sebagai kelebihan; kalau aplikasi dianggap lengkap, 85 transaksi
+hilang. Yang benar gabungan keduanya, dengan 14 baris kembar dibuang.
+
+### Aturan diskon event berhasil dipulihkan dari data
+
+Rekapnya tidak mencatat diskon, hanya total. Dari 40 transaksi yang sudah masuk
+ketemu polanya: **1 pcs tanpa diskon, 2-3 pcs 10%, 4 pcs atau lebih 15%**. Pola
+itu mereproduksi total di rekap **persis sampai rupiah** untuk mayoritas baris,
+termasuk baris yang isinya campur sambal, chili oil, abon, dan sprinkle. Itu
+yang membuat pembacaan rekapnya bisa diuji, bukan ditebak - sekaligus memastikan
+"abon tabur" (botol 45 g, Rp 44.000) memang beda barang dari "abon" (pouch
+100 g, Rp 60.000).
+
+### Stok
+
+Stok barang yang dibawa ke event tidak pernah dicatat masuk, jadi memasukkan 85
+transaksi akan membuat stok minus (Cumi Lv2 -12, Chili Oil -27, SDGJ Lv2 -3).
+Diputuskan mencatat **penambahan stok sebesar kekurangannya saja**, bertanggal
+4 Nov 08.00 sebelum transaksi pertama, dengan catatan "stok dibawa ke event,
+tidak tercatat saat itu". Hasilnya stok tidak pernah minus di titik mana pun,
+dan aturan "stok lewat buku besar" (K6) tetap utuh: jumlah seluruh baris
+pergerakan tetap sama dengan angka stok tiap produk.
+
+### Yang sengaja tidak sempurna
+
+- **Jam transaksinya perkiraan.** Rekap tidak mencatat jam, jadi 85 baris
+  disebar merata 11.00-17.00 mengikuti urutan tulisannya. Grafik "jam ramai"
+  untuk 4-7 November karena itu tidak bisa dipakai menyimpulkan apa pun.
+- **Kasirnya tercatat Lutfi Apriamto**, bukan kasir yang sebenarnya melayani,
+  karena rekapnya tidak menyebut nama. Yang tercatat adalah kebenaran yang bisa
+  dipertanggungjawabkan: Lutfi yang memasukkan datanya. Laporan per kasir untuk
+  rentang itu jadi tidak mewakili siapa yang berjualan.

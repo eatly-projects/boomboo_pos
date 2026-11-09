@@ -47,3 +47,9 @@ docs/Price List CBE.xlsx
 
 # Tangkapan layar dan berkas titipan Lutfi - sering memuat kredensial
 jangan_push/
+
+# Berkas mentah dari Lutfi. Isi rekap penjualan 4-7 Nov 2026 yang terpakai sudah
+# disalin apa adanya ke docs/rekap-event-4-7-november-2026.txt supaya angka di
+# basis data tetap bisa dilacak sumbernya.
+*.docx
+WhatsApp Image*
