@@ -1,19 +1,44 @@
+# Rekap penjualan tulisan tangan event 4-7 November 2026
+#
+# Sumbernya berkas "Hari rabu tanggal 04.docx" dari Lutfi, disalin apa adanya
+# pada 9 November 2026. Berkas ini yang dibaca `npm run seed:rekap-nov`, jadi
+# inilah jejak asal angka penjualan 4-7 November di basis data.
+#
+# LIMA BARIS DIKOREKSI LUTFI lewat chat pada 9 November 2026, karena angka
+# aslinya tidak mungkin benar. Tulisan aslinya dicatat di sini supaya tetap
+# bisa dilacak:
+#
+#   baris   5  : "cakalang lvl 2 haraga 100000"
+#                -> 1 cakalang Rp 48.000, pembeli membayar Rp 100.000 dan tidak
+#                   mengambil kembalian ("orangnya dermawan"). Uang yang masuk
+#                   Rp 100.000, nilai keranjangnya tetap Rp 48.000.
+#   baris  11  : "cakalang lvl 2 4, cumi lvl 2 4, 537600"
+#                -> ada barang yang belum tertulis: ditambah teri lvl 2 4,
+#                   cumi lvl 4 2, dan SDGJ lvl 4 2.
+#   baris  17  : "teri lvl 2 1, teri lvl 2 2, 86400"
+#                -> yang kedua maksudnya teri lvl 4.
+#   baris  70  : "... cili oil 2, cumi lvl 2 1, bom chips ..."
+#                -> cumi yang kedua maksudnya lvl 4.
+#   baris 104  : "Boom chips salted egg 1, 2000"
+#                -> maksudnya Rp 20.000.
+#
+# Baris di atas judul hari diabaikan pembacanya, jadi catatan ini aman di sini.
 Hari rabu tanggal 04 1. Cakalang lvl 2 1, cumi 1 harga 864002.  Teri lvl 4 1, SDGJ lvl 4 1, sachech lvl 4 1, cumi lvl 4 1 harganya 176800
 3. sdgj lvl 2 1 harga 38000
 4. cumi lvl 2 1 harga 48000
-5. cakalang lvl 2 haraga 100000
+5. cakalang lvl 2 1 harga 48000 (tanpa kembalian, dibayar 100000)
 6. cumi lvl 2 1, cakalang 1, 86400
 7. sesame chilie oil 1, 60000
 8. cakalang lvl 2 1, 48000
 9. cumi lvl 2 4, cumi lvl 4 1, cakalang 1, 244800
 10. teri lvl 2 1, cumi lvl 2 1, cakalang lvl 2 1, sesame garlic 173400
-11. cakalang lvl 2 4, cumi lvl 2 4, 537600
+11. cakalang lvl 2 4, cumi lvl 2 4, teri lvl 2 4, cumi lvl 4 2, SDGJ lvl 4 2, 537600
 12. cakalang lvl 2 2, 86400
 13. cumi lvl 4 1, cakalang lvl 2 1, 86400
 14. cakalang lvl 2 2, cumi lvl 4 1, cumi lvl 2 1, 163200
 15. cakalang lvl 2 2, cumi lvl 2 2, 163200
 16. cakalang lvl 2 1, sdgj lvl 2 1, 77400
-17. teri lvl 2 1, teri lvl 2 2, 86400
+17. teri lvl 2 1, teri lvl 4 2, 86400
 Hari kamis 05
 Sachect lvl 2 2, teri lvl 2 1, teri lvl 4 1, 188700
 Cakalang lvl 2 2, 86400
@@ -67,7 +92,7 @@ Sachet lvl 2 1, 63000
 Caklang lvl 2 1, cumi lvl 2 1, 86400
 Caklaang lvl 2 3, cumi lvl 2 3,  244800
 SDGJ lvl 2 1, 38000
-Cumi lvl 2 2, cakalang lvl 2 4, cili oil 2, cumi lvl 2 1, bom chips jagung bakar 1, boom chips signature chii oil 1, 388000
+Cumi lvl 2 2, cakalang lvl 2 4, cili oil 2, cumi lvl 4 1, bom chips jagung bakar 1, boom chips signature chii oil 1, 388000
 Saschet lvl 4 1, sachet lvl 2 1, springkle hot 1, cumi 1, 109400
 Cumi lvl 2 2, teri lvl 2 1, cakalang lvl 2 1, 163200
 Cumi lvl 2 2, cakalang lvl 2 2, 163200
@@ -101,6 +126,6 @@ Chili 1, cumi lvl 4 1, cumi lvl 2 2, 122400
 Abon oiginal 3, abon pedas manis 2, 150000
 Cumi lvl 4 3, teri lvl 4 2, 120000
 Cumi lvl 4 2,  teri lvl 4 2, Boom chips salted egg 2, 124000
-Boom chips salted egg 1, 2000
+Boom chips salted egg 1, 20000
 Cumi lvl 4 1, 24000
 Cumi lvl 4 2, teri lvl 4 2, cumi lvl 2 1, 120000

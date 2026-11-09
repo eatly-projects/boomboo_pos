@@ -166,6 +166,10 @@ function uraikan(teks) {
   for (const mentah of teks.split(/\r?\n/)) {
     let t = mentah.trim();
     if (!t) continue;
+    // Baris berawalan # adalah catatan manusia, bukan transaksi. Harus
+    // dilewati SEBELUM judul hari dicari, karena catatannya sendiri bisa
+    // menyebut nama berkas "Hari rabu tanggal 04.docx".
+    if (t.startsWith('#')) continue;
 
     for (const [pola, tgl] of HARI) {
       if (pola.test(t)) {
@@ -189,7 +193,21 @@ function uraikan(teks) {
     const catatan = [];
     let total = null;
 
-    const potongan = b.mentah.split(',').map((x) => x.trim()).filter(Boolean);
+    /**
+     * "(tanpa kembalian, dibayar 100000)" - pembeli membayar lebih besar dari
+     * nilai keranjangnya dan tidak mengambil kembalian.
+     *
+     * Ini BUKAN diskon, jadi tidak boleh dicatat sebagai diskon negatif:
+     * nilai keranjangnya tetap harga normal, yang berbeda hanya uang yang
+     * benar-benar bergerak. Kolom `uang_masuk` memang dibuat untuk ini
+     * (lihat migrasi 002), sama seperti pada transaksi hasil penukaran.
+     */
+    let uangDiterima = null;
+    const mLebih = b.mentah.match(/\(\s*tanpa kembalian,\s*dibayar\s*(\d{4,})\s*\)/i);
+    const mentahBersih = mLebih ? b.mentah.replace(mLebih[0], '').trim().replace(/,\s*$/, '') : b.mentah;
+    if (mLebih) uangDiterima = Number(mLebih[1]);
+
+    const potongan = mentahBersih.split(',').map((x) => x.trim()).filter(Boolean);
 
     const tambah = (namaMentah, jumlah) => {
       const [nama, galat] = petakan(namaMentah);
@@ -244,7 +262,17 @@ function uraikan(teks) {
     const persenTersirat =
       subtotal > 0 && total !== null ? Math.round((1 - total / subtotal) * 1000) / 10 : null;
 
-    return { ...b, barang, catatan, total, unit, subtotal, totalWajar, persenTersirat };
+    return {
+      ...b,
+      barang,
+      catatan,
+      total,
+      uangDiterima,
+      unit,
+      subtotal,
+      totalWajar,
+      persenTersirat,
+    };
   });
 }
 
@@ -252,8 +280,15 @@ function uraikan(teks) {
 /* Penyaring: mana yang boleh masuk                                    */
 /* ------------------------------------------------------------------ */
 
-const sidik = (tanggal, barang, total) =>
-  `${tanggal}|${barang.map((x) => `${x.nama}x${x.jumlah}`).sort().join('+')}|${total}`;
+/**
+ * Sidik jari satu transaksi: tanggal, isi keranjang, nilai keranjang, dan uang
+ * yang bergerak. Uang ikut dihitung supaya penjualan Rp 48.000 biasa tidak
+ * tertukar dengan penjualan Rp 48.000 yang pembelinya membayar Rp 100.000 dan
+ * tidak mengambil kembalian - keranjangnya sama, tapi itu dua transaksi
+ * berbeda.
+ */
+const sidik = (tanggal, barang, total, uang) =>
+  `${tanggal}|${barang.map((x) => `${x.nama}x${x.jumlah}`).sort().join('+')}|${total}|${uang ?? total}`;
 
 /** Baris yang angkanya tidak mungkin benar, jadi tidak boleh ditebak. */
 function alasanDitolak(b) {
@@ -303,21 +338,24 @@ async function jalankan() {
 
     /* --- transaksi yang sudah ada di tanggal event --- */
     const { rows: adaDb } = await klien.query(`
-      select t.total, to_char(t.dibuat_pada at time zone 'Asia/Jakarta', 'YYYY-MM-DD') as tanggal,
+      select t.total, t.uang_masuk, to_char(t.dibuat_pada at time zone 'Asia/Jakarta', 'YYYY-MM-DD') as tanggal,
              json_agg(json_build_object('nama', i.nama_barang, 'jumlah', i.jumlah)) as barang
         from transaksi t
         join transaksi_item i on i.transaksi_id = t.id
        where (t.dibuat_pada at time zone 'Asia/Jakarta')::date between '2026-11-04' and '2026-11-07'
        group by t.id, t.total, t.dibuat_pada
     `);
-    const sudahAdaSet = new Set(adaDb.map((r) => sidik(r.tanggal, r.barang, Number(r.total))));
+    const sudahAdaSet = new Set(
+      adaDb.map((r) => sidik(r.tanggal, r.barang, Number(r.total), Number(r.uang_masuk))),
+    );
 
     /* --- bagi tiga --- */
     const sudahAda = [];
     const ditolak = [];
     const masuk = [];
     for (const b of semua) {
-      if (sudahAdaSet.has(sidik(b.tanggal, b.barang, b.total))) sudahAda.push(b);
+      if (sudahAdaSet.has(sidik(b.tanggal, b.barang, b.total, b.uangDiterima ?? b.total)))
+        sudahAda.push(b);
       else {
         const alasan = alasanDitolak(b);
         if (alasan) ditolak.push({ ...b, alasan });
@@ -328,7 +366,9 @@ async function jalankan() {
     console.log('='.repeat(96));
     console.log(`Sudah ada di aplikasi, dilewati : ${sudahAda.length}`);
     console.log(`Perlu dibetulkan dulu, dilewati : ${ditolak.length}`);
-    console.log(`Akan dimasukkan                 : ${masuk.length}  (${rupiah(masuk.reduce((j, b) => j + b.total, 0))})`);
+    console.log(
+      `Akan dimasukkan                 : ${masuk.length}  (${rupiah(masuk.reduce((j, b) => j + (b.uangDiterima ?? b.total), 0))})`,
+    );
     console.log('='.repeat(96));
 
     if (ditolak.length) {
@@ -467,13 +507,16 @@ async function jalankan() {
         }));
         const subtotal = item.reduce((j, x) => j + x.subtotal, 0);
         const potongan = subtotal - b.total;
+        // Nilai keranjang tetap `b.total`; yang bisa lebih besar hanya uang
+        // yang bergerak, saat pembeli tidak mengambil kembaliannya.
+        const uangTransaksi = b.uangDiterima ?? b.total;
 
         const { rows: trx } = await klien.query(
           `insert into transaksi
              (nomor, kode_struk, status, metode_bayar, subtotal, diskon_jenis, diskon_nilai,
               diskon_rupiah, total, uang_masuk, kasir_id, nama_kasir,
               dikonfirmasi_oleh_id, nama_pengonfirmasi, dibuat_pada, dikonfirmasi_pada)
-           values ($1,$2,'selesai','qris',$3,$4,$5,$6,$7,$7,$8,$9,$8,$9,$10,$10)
+           values ($1,$2,'selesai','qris',$3,$4,$5,$6,$7,$11,$8,$9,$8,$9,$10,$10)
            returning id, nomor`,
           [
             nomor,
@@ -486,6 +529,7 @@ async function jalankan() {
             user.id,
             user.nama,
             waktu,
+            uangTransaksi,
           ],
         );
         const transaksiId = trx[0].id;
@@ -538,13 +582,19 @@ async function jalankan() {
               baris_rekap: b.mentah,
               harga_normal: subtotal,
               potongan_rupiah: potongan > 0 ? potongan : 0,
+              ...(b.uangDiterima
+                ? {
+                    uang_masuk: b.uangDiterima,
+                    catatan_uang: `Pembeli membayar Rp ${b.uangDiterima.toLocaleString('id-ID')} dan tidak mengambil kembalian. Nilai keranjangnya Rp ${b.total.toLocaleString('id-ID')}.`,
+                  }
+                : {}),
             },
           },
           klien,
         );
 
         jumlahMasuk++;
-        uangMasuk += b.total;
+        uangMasuk += uangTransaksi;
       }
 
       await klien.query(
@@ -596,7 +646,7 @@ async function jalankan() {
     if (jumlahMasuk !== masuk.length)
       throw new Error(`Yang masuk ${jumlahMasuk}, seharusnya ${masuk.length}. Dibatalkan.`);
 
-    const uangSeharusnya = masuk.reduce((j, b) => j + b.total, 0);
+    const uangSeharusnya = masuk.reduce((j, b) => j + (b.uangDiterima ?? b.total), 0);
     if (uangMasuk !== uangSeharusnya)
       throw new Error(`Uang masuk ${uangMasuk}, seharusnya ${uangSeharusnya}. Dibatalkan.`);
 

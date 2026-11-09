@@ -186,24 +186,22 @@ dimasukkan 9 November dari rekap tulisan tangan.
 |---|---|
 | Baris di rekap tulisan tangan | 104 transaksi |
 | Sudah ada di aplikasi, dilewati | 14 |
-| **Dimasukkan** | **85 transaksi, Rp 10.230.900** |
-| Dilewati karena angkanya mustahil | 5 |
-| Produk baru ditambahkan | 9 |
-| Stok masuk dicatat menyusul | 12 produk |
+| **Dimasukkan** | **90 transaksi, Rp 11.362.900** |
+| Produk baru ditambahkan | 10 |
+| Stok masuk dicatat menyusul | 13 produk |
 
 ### Keadaan event 4-7 November sesudah diisi
 
 | Tanggal | Transaksi berhasil | Uang masuk |
 |---|---|---|
-| 4 Nov | 17 | Rp 1.860.600 |
-| 5 Nov | 33 | Rp 3.854.950 |
-| 6 Nov | 34 | Rp 4.300.970 |
-| 7 Nov | 40 | Rp 4.422.700 |
-| **Total** | **124** | **Rp 14.439.220** |
+| Rabu 4 Nov | 20 | Rp 2.584.600 |
+| Kamis 5 Nov | 33 | Rp 3.854.950 |
+| Jumat 6 Nov | 34 | Rp 4.300.970 |
+| Sabtu 7 Nov | 42 | Rp 4.830.700 |
+| **Total** | **129** | **Rp 15.571.220** |
 
-Barang terlaris: Sambal Ikan Cakalang Daun Jeruk Level 2, 88 pcs, Rp 4.224.000.
-Rata-rata per transaksi Rp 116.445. Diskon Rp 3.629.780 dari harga normal
-Rp 18.069.000.
+Rata-rata per transaksi Rp 120.707. Diskon Rp 4.015.780 dari harga normal
+Rp 19.535.000. Barang terlaris Sambal Ikan Cakalang Daun Jeruk Level 2.
 
 ### Perintahnya
 
@@ -212,36 +210,66 @@ npm run seed:rekap-nov -- "../docs/rekap-event-4-7-november-2026.txt"           
 npm run seed:rekap-nov -- "../docs/rekap-event-4-7-november-2026.txt" --tulis    # menulis
 ```
 
-**Aman dijalankan berulang.** Baris yang tanggal + keranjang + totalnya sudah
-sama dengan transaksi yang ada dianggap sudah masuk, jadi menjalankan dua kali
-tidak menggandakan apa pun. Sudah dibuktikan: jalan kedua melaporkan 99 sudah
-ada, 0 dimasukkan. Semuanya dalam satu transaksi basis data, dan sebelum commit
-ada cek silang stok dan cek jumlah uang - kalau tidak cocok, semuanya dibatalkan.
+**Aman dijalankan berulang.** Sidik jari satu transaksi adalah tanggal + isi
+keranjang + nilai keranjang + uang yang bergerak; baris yang sidik jarinya sudah
+ada dianggap sudah masuk. Jadi menjalankan dua kali tidak menggandakan apa pun.
+Semuanya dalam satu transaksi basis data, dan sebelum commit ada cek silang stok
+serta cek jumlah uang - kalau tidak cocok, semuanya dibatalkan.
 
-### Lima baris yang masih menunggu koreksi
+Berkas rekapnya bisa dikoreksi lalu dijalankan ulang; yang sudah masuk tidak
+akan dobel. Baris berawalan `#` di berkas itu adalah catatan manusia dan
+diabaikan pembacanya.
 
-Angkanya tidak mungkin benar, dan sengaja tidak ditebak:
+### Lima baris yang dikoreksi Lutfi (9 November 2026)
 
-| Tanggal | Tulisan di rekap | Masalahnya |
-|---|---|---|
-| 4 Nov | `cakalang lvl 2 haraga 100000` | 1 cakalang = Rp 48.000, bukan Rp 100.000 |
-| 4 Nov | `cakalang lvl 2 4, cumi lvl 2 4, 537600` | 8 pcs paling mahal Rp 384.000 |
-| 4 Nov | `teri lvl 2 1, teri lvl 2 2, 86400` | teri Lv2 tertulis dua kali, kemungkinan yang kedua Lv4 |
-| 7 Nov | `Cumi lvl 2 2, cakalang lvl 2 4, cili oil 2, cumi lvl 2 1, bom chips jagung bakar 1, boom chips signature chii oil 1, 388000` | cumi Lv2 tertulis dua kali |
-| 7 Nov | `Boom chips salted egg 1, 2000` | kemungkinan maksudnya Rp 20.000 |
+Angka aslinya tidak mungkin benar, jadi tidak ditebak melainkan ditanyakan.
+Tulisan aslinya tetap dicatat di kepala `docs/rekap-event-4-7-november-2026.txt`.
 
-Nilainya kalau nanti dibetulkan: sekitar Rp 1,1 juta. Begitu dibetulkan di
-`docs/rekap-event-4-7-november-2026.txt`, jalankan ulang perintah di atas -
-yang sudah masuk tidak akan dobel.
+| Tulisan asli | Koreksinya |
+|---|---|
+| `cakalang lvl 2 haraga 100000` | Belanjanya Rp 48.000; pembeli membayar Rp 100.000 dan **tidak mengambil kembalian** |
+| `cakalang lvl 2 4, cumi lvl 2 4, 537600` | Ada barang yang belum tertulis: ditambah teri Lv2 4, cumi Lv4 2, SDGJ Lv4 2 |
+| `teri lvl 2 1, teri lvl 2 2, 86400` | Yang kedua maksudnya teri **Lv4** |
+| `... cili oil 2, cumi lvl 2 1, bom chips ...` | Cumi yang kedua maksudnya **Lv4** |
+| `Boom chips salted egg 1, 2000` | Maksudnya **Rp 20.000** |
 
 ### Yang perkiraan, bukan catatan
 
-- **Jam transaksinya perkiraan.** Rekap tidak mencatat jam, jadi 85 baris
+- **Jam transaksinya perkiraan.** Rekap tidak mencatat jam, jadi 90 baris
   disebar merata 11.00-17.00 mengikuti urutan tulisannya. Grafik "jam ramai"
   untuk 4-7 November tidak bisa dipakai menyimpulkan apa pun.
-- **Kasirnya tercatat Lutfi Apriamto** untuk 85 baris itu, karena rekapnya
+- **Kasirnya tercatat Lutfi Apriamto** untuk 90 baris itu, karena rekapnya
   tidak menyebut siapa yang melayani. Laporan per kasir untuk rentang itu jadi
-  tidak mewakili siapa yang berjualan: Lutfi 85, indri 29, ema 10.
+  tidak mewakili siapa yang berjualan: Lutfi 90, indri 29, ema 10.
+
+### Dua baris yang mungkin kembar
+
+Keranjang dan tanggalnya sama dengan transaksi yang sudah ada, tapi totalnya
+beda, jadi dua-duanya masuk. Kalau ternyata penjualan yang sama, ada kelebihan
+Rp 171.400:
+
+- 4 Nov `cakalang lvl 2 2 = 86.400`, sementara di aplikasi ada yang Rp 96.000
+- 6 Nov `Chili 1, teri lvl 2 1 = 85.000`, sementara di aplikasi ada yang Rp 85.320
+
+---
+
+## Mengekspor laporan jadi berkas PDF dan Excel
+
+```
+npm run laporan:ekspor -- 2026-11-04 2026-11-07            # ke folder Downloads
+npm run laporan:ekspor -- 2026-11-04 2026-11-07 "D:/folder" # ke folder lain
+```
+
+Berkas Excel-nya memakai pembuat yang **sama** dengan tombol "Unduh Excel" di
+aplikasi (`laporan.excel.js`), jadi isinya tidak mungkin berbeda dari yang
+diunduh pengguna. Lembar yang isinya kosong dilewati: untuk 4-7 November hasilnya
+6 lembar, karena tidak ada barang keluar bukan jualan di rentang itu.
+
+Berkas PDF-nya menyusun ulang tampilan halaman Laporan Penjualan sebagai satu
+berkas HTML, lalu dicetak memakai Microsoft Edge tanpa jendela
+(`--headless=new --print-to-pdf`). Angkanya diambil dari `laporan.service.js`
+yang sama dengan yang dipakai halamannya, jadi angka di PDF, Excel, dan layar
+pasti sama.
 
 ---
 

@@ -14,6 +14,7 @@
     "seed:bill": "node seed/isi-bill.js",
     "seed:bersihkan": "node seed/bersihkan.js",
     "seed:rekap-nov": "node seed/isi-rekap-november.js",
+    "laporan:ekspor": "node seed/ekspor-laporan.js",
     "siapkan:bucket": "node seed/siapkan-bucket.js",
     "uji": "node uji/alur-kasir.mjs",
     "uji:pindah": "node uji/pindah-basis-data.mjs",
